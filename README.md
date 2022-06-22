@@ -38,20 +38,3 @@
         (ex python main.py --metamodel ../metamodel.json | tee ../output.txt)
     - check output file for result (less ../output.txt)
 
-#################################
-# RUNNING THE TOOL WITH GUI     #
-#################################
-
-- cd ../gradle_parser
-- npm start
-- in another terminal : 
-    - cd Mars/Extractor
-    - export FLASK_APP=app
-    - flask run -p 3000
-
-- in yet another terminal :
-    - cd Mars/frontend
-    - npm start
-
-- in your browser :
-    - localhost:8080
