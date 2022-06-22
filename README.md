@@ -14,9 +14,6 @@
 - gem install bibliothecary
 - cd ../GitImporter
 - pip install -r requirements.txt
-# Optional to run with GUI #
-- cd ../frontend
-- npm install
 
 #################################
 # RUNNING THE TOOL WITHOUT GUI  #
