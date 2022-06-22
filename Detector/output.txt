@@ -1,0 +1,686 @@
+
+
+====================================================================
+Extracting antipatterns from metamodel complete. Printing results...
+====================================================================
+
+
+System information : 
+=====================
+Number of microservices : 18
+Total lines of code : 9941
+Total number of files : 320
+Avg LOCs per service : 552
+Avg Files per service : 17
+
+
+Detection summary : 
+===========================
+
+
+Nano services : 
+----------------
+- ftgo-accounting-service-api: 73 Locs, 4 Files.
+- ftgo-common-jpa: 1 Locs, 1 Files.
+- ftgo-consumer-service-api: 4 Locs, 1 Files.
+- ftgo-delivery-service-api: 92 Locs, 6 Files.
+- ftgo-restaurant-service-api: 4 Locs, 1 Files.
+
+
+Mega services : 
+----------------
+- ftgo-kitchen-service: 858 Locs, 32 Files.
+- ftgo-order-service: 3307 Locs, 94 Files.
+
+
+Hardcoded Endpoints : 
+----------------------
+- ftgo-api-gateway
+	- Has service discovery tool : False
+	- Found URLs in microservice :
+		- http://ftgo-order-service:8080
+		- http://ftgo-order-history-service:8080
+		- http://ftgo-consumer-service:8080
+- ftgo-order-history-service
+	- Has service discovery tool : False
+	- Found URLs in microservice :
+		- http://ftgo-dynamodb-local:8000
+- system
+	- Has service discovery tool : False
+	- Found URLs in microservice :
+		- http://ftgo-order-history-service:8080
+		- http://ftgo-consumer-service:8080
+		- http://ftgo-restaurant-service:8080
+		- http://zipkin:9411/
+		- http://zipkin:9411/
+		- http://dynamodblocal:8000
+		- http://ftgo-order-service:8080
+		- http://ftgo-order-history-service:8080
+		- http://ftgo-consumer-service:8080
+		- http://zipkin:9411/
+		- http://dynamodblocal:8000
+
+
+Manual configuration : 
+-----------------------
+- ftgo-accounting-service
+	- Has configuration tool : False
+	- Found config files in microservice :
+		- application.properties
+		- ftgo-accounting-service.yml
+- ftgo-api-gateway
+	- Has configuration tool : False
+	- Found config files in microservice :
+		- application.properties
+		- ftgo-api-gateway.yml
+		- ftgo-api-gateway-NodePort.yml
+- ftgo-consumer-service
+	- Has configuration tool : False
+	- Found config files in microservice :
+		- application.properties
+		- ftgo-consumer-service.yml
+- ftgo-delivery-service
+	- Has configuration tool : False
+	- Found config files in microservice :
+		- application.properties
+- ftgo-kitchen-service
+	- Has configuration tool : False
+	- Found config files in microservice :
+		- application.properties
+		- ftgo-kitchen-service.yml
+- ftgo-order-history-service
+	- Has configuration tool : False
+	- Found config files in microservice :
+		- application.properties
+		- ftgo-order-history-service.yml
+- ftgo-order-service
+	- Has configuration tool : False
+	- Found config files in microservice :
+		- application.properties
+		- ftgo-order-service.yml
+		- prometheus.yml
+		- rbac.yml
+- ftgo-restaurant-service
+	- Has configuration tool : False
+	- Found config files in microservice :
+		- application.properties
+		- ftgo-restaurant-service.yml
+- system
+	- Has configuration tool : False
+	- Found config files in microservice :
+		- gradle.properties
+		- docker-compose-api-gateway-graphql.yml
+		- docker-compose.yml
+		- skaffold.yaml
+
+
+No API Gateway : 
+-----------------
+- ftgo-accounting-service has no API Gateway tools
+- ftgo-accounting-service-api has no API Gateway tools
+- system has no API Gateway tools
+
+
+Local logging : 
+----------------
+- ftgo-accounting-service has no logging tools
+- ftgo-accounting-service-api has no logging tools
+- system has no logging tools
+
+
+Insufficient monitoring : 
+--------------------------
+- ftgo-accounting-service has no monitoring tools
+- ftgo-accounting-service-api has no monitoring tools
+- system has no monitoring tools
+
+
+No CI/CD : 
+-----------
+*** System has CI/CD information, however, the following microservices do not.***
+*** If you consider system wide CI/CD valid, please ignore this antipattern.***
+- ftgo-accounting-service has no CI/CD information
+- ftgo-accounting-service-api has no CI/CD information
+- ftgo-api-gateway has no CI/CD information
+- ftgo-api-gateway-graphql has no CI/CD information
+- ftgo-common has no CI/CD information
+- ftgo-common-jpa has no CI/CD information
+- ftgo-consumer-service has no CI/CD information
+- ftgo-consumer-service-api has no CI/CD information
+- ftgo-delivery-service has no CI/CD information
+- ftgo-delivery-service-api has no CI/CD information
+- ftgo-end-to-end-tests has no CI/CD information
+- ftgo-kitchen-service has no CI/CD information
+- ftgo-kitchen-service-api has no CI/CD information
+- ftgo-order-history-service has no CI/CD information
+- ftgo-order-service has no CI/CD information
+- ftgo-order-service-api has no CI/CD information
+- ftgo-restaurant-service has no CI/CD information
+- ftgo-restaurant-service-api has no CI/CD information
+
+
+Multiple instances per host : 
+--------------------------
+*** System has docker compose file. However, the following microservices do not have any dockerfile.***
+*** This is a warning because the following might be on a shared host.***
+- ftgo-accounting-service-api has no DockerFile
+- ftgo-common has no DockerFile
+- ftgo-common-jpa has no DockerFile
+- ftgo-consumer-service-api has no DockerFile
+- ftgo-delivery-service-api has no DockerFile
+- ftgo-end-to-end-tests has no DockerFile
+- ftgo-kitchen-service-api has no DockerFile
+- ftgo-order-service-api has no DockerFile
+- ftgo-restaurant-service-api has no DockerFile
+- system has no DockerFile
+
+
+No HealthCheck : 
+-----------------
+*** If you only see system on this list, you're most likely fine.***
+- system has no healthcheck library
+
+
+Timeouts : 
+-----------------
+- ftgo-accounting-service has possible timeout antipattern:
+	- Has Circuit Breaker Tool : False
+	- Has Timeout methods : False
+	- Has Timeout imports : True
+	- Has Fallback methods : False
+
+
+Shared Databases : 
+-----------------
+ftgo-accounting-service shares the following DBs with ftgo-kitchen-service:
+	- ftgo-mysql/eventuate
+ftgo-accounting-service shares the following DBs with ftgo-order-history-service:
+	- ftgo-mysql/eventuate
+ftgo-accounting-service shares the following DBs with ftgo-order-service:
+	- ftgo-mysql/eventuate
+ftgo-accounting-service shares the following DBs with ftgo-restaurant-service:
+	- ftgo-mysql/eventuate
+ftgo-kitchen-service shares the following DBs with ftgo-order-history-service:
+	- ftgo-mysql/eventuate
+ftgo-kitchen-service shares the following DBs with ftgo-order-service:
+	- ftgo-mysql/eventuate
+ftgo-kitchen-service shares the following DBs with ftgo-restaurant-service:
+	- ftgo-mysql/eventuate
+ftgo-order-history-service shares the following DBs with ftgo-order-service:
+	- ftgo-mysql/eventuate
+ftgo-order-history-service shares the following DBs with ftgo-restaurant-service:
+	- ftgo-mysql/eventuate
+ftgo-order-service shares the following DBs with ftgo-restaurant-service:
+	- ftgo-mysql/eventuate
+
+
+Wrong cuts : 
+-------------
+
+
+Circular Dependencies : 
+------------------------
+
+
+Shared Dependencies : 
+----------------------
+ftgo-accounting-service shares the following dependencies with ftgo-api-gateway:
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.springframework.boot:spring-boot-starter-test
+ftgo-accounting-service shares the following dependencies with ftgo-common:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- org.springframework.boot:spring-boot-starter-test
+ftgo-accounting-service shares the following dependencies with ftgo-common-jpa:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-accounting-service shares the following dependencies with ftgo-consumer-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-jdbc-kafka
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- io.eventuate.tram.core:eventuate-tram-spring-messaging
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-orchestration-simple-dsl
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.springframework.boot:spring-boot-starter-web
+	- javax.el:javax.el-api
+	- org.apache.kafka:kafka-clients
+	- io.eventuate.tram.core:eventuate-tram-spring-in-memory
+	- io.eventuate.util:eventuate-util-test
+	- io.eventuate.tram.core:eventuate-tram-test-util
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-in-memory
+	- org.springframework.boot:spring-boot-starter-test
+	- com.jayway.restassured:rest-assured
+	- com.jayway.jsonpath:json-path
+ftgo-accounting-service shares the following dependencies with ftgo-delivery-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-jdbc-kafka
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.apache.kafka:kafka-clients
+	- io.eventuate.tram.core:eventuate-tram-spring-in-memory
+	- io.eventuate.util:eventuate-util-test
+	- org.springframework.boot:spring-boot-starter-test
+ftgo-accounting-service shares the following dependencies with ftgo-end-to-end-tests:
+	- io.eventuate.util:eventuate-util-test
+	- org.springframework.boot:spring-boot-starter-test
+	- com.jayway.restassured:rest-assured
+	- com.jayway.jsonpath:json-path
+ftgo-accounting-service shares the following dependencies with ftgo-kitchen-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-jdbc-kafka
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- io.eventuate.tram.core:eventuate-tram-spring-messaging
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-orchestration-simple-dsl
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.springframework.boot:spring-boot-starter-web
+	- javax.el:javax.el-api
+	- org.apache.kafka:kafka-clients
+	- io.eventuate.tram.core:eventuate-tram-spring-in-memory
+	- io.eventuate.util:eventuate-util-test
+	- io.eventuate.tram.core:eventuate-tram-test-util
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-in-memory
+	- org.springframework.boot:spring-boot-starter-test
+	- com.jayway.restassured:rest-assured
+	- com.jayway.jsonpath:json-path
+ftgo-accounting-service shares the following dependencies with ftgo-kitchen-service-api:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-accounting-service shares the following dependencies with ftgo-order-history-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- io.eventuate.tram.core:eventuate-tram-spring-messaging
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.springframework.boot:spring-boot-starter-web
+	- javax.el:javax.el-api
+	- org.apache.kafka:kafka-clients
+	- io.eventuate.tram.core:eventuate-tram-spring-in-memory
+	- io.eventuate.util:eventuate-util-test
+	- io.eventuate.tram.core:eventuate-tram-test-util
+	- org.springframework.boot:spring-boot-starter-test
+	- com.jayway.restassured:rest-assured
+	- com.jayway.jsonpath:json-path
+ftgo-accounting-service shares the following dependencies with ftgo-order-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-jdbc-kafka
+	- io.eventuate.tram.core:eventuate-tram-spring-messaging
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-orchestration-simple-dsl
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.springframework.boot:spring-boot-starter-web
+	- javax.el:javax.el-api
+	- org.apache.kafka:kafka-clients
+	- io.eventuate.util:eventuate-util-test
+	- io.eventuate.tram.core:eventuate-tram-test-util
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-in-memory
+	- org.springframework.boot:spring-boot-starter-test
+ftgo-accounting-service shares the following dependencies with ftgo-order-service-api:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-accounting-service shares the following dependencies with ftgo-restaurant-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-jdbc-kafka
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- io.eventuate.tram.core:eventuate-tram-spring-messaging
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-orchestration-simple-dsl
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.springframework.boot:spring-boot-starter-web
+	- javax.el:javax.el-api
+	- org.apache.kafka:kafka-clients
+	- io.eventuate.util:eventuate-util-test
+	- io.eventuate.tram.core:eventuate-tram-test-util
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-in-memory
+	- org.springframework.boot:spring-boot-starter-test
+	- com.jayway.restassured:rest-assured
+	- com.jayway.jsonpath:json-path
+ftgo-accounting-service shares the following dependencies with ftgo-restaurant-service-api:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+ftgo-accounting-service-api shares the following dependencies with ftgo-consumer-service-api:
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-participant
+ftgo-accounting-service-api shares the following dependencies with ftgo-kitchen-service-api:
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-participant
+ftgo-api-gateway shares the following dependencies with ftgo-common:
+	- org.springframework.boot:spring-boot-starter-test
+ftgo-api-gateway shares the following dependencies with ftgo-consumer-service:
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.springframework.boot:spring-boot-starter-test
+ftgo-api-gateway shares the following dependencies with ftgo-delivery-service:
+	- io.micrometer:micrometer-registry-prometheus
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.springframework.boot:spring-boot-starter-test
+ftgo-api-gateway shares the following dependencies with ftgo-end-to-end-tests:
+	- org.springframework.boot:spring-boot-starter-test
+ftgo-api-gateway shares the following dependencies with ftgo-kitchen-service:
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.springframework.boot:spring-boot-starter-test
+ftgo-api-gateway shares the following dependencies with ftgo-order-history-service:
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.springframework.boot:spring-boot-starter-test
+	- org.springframework.cloud:spring-cloud-contract-wiremock
+	- org.springframework.cloud:spring-cloud-starter-contract-stub-runner
+ftgo-api-gateway shares the following dependencies with ftgo-order-service:
+	- io.micrometer:micrometer-registry-prometheus
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.springframework.boot:spring-boot-starter-test
+	- org.springframework.cloud:spring-cloud-contract-wiremock
+	- org.springframework.cloud:spring-cloud-starter-contract-stub-runner
+ftgo-api-gateway shares the following dependencies with ftgo-restaurant-service:
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.springframework.boot:spring-boot-starter-test
+ftgo-common shares the following dependencies with ftgo-common-jpa:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-common shares the following dependencies with ftgo-consumer-service:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- org.springframework.boot:spring-boot-starter-test
+ftgo-common shares the following dependencies with ftgo-delivery-service:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- org.springframework.boot:spring-boot-starter-test
+ftgo-common shares the following dependencies with ftgo-end-to-end-tests:
+	- org.springframework.boot:spring-boot-starter-test
+ftgo-common shares the following dependencies with ftgo-kitchen-service:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- org.springframework.boot:spring-boot-starter-test
+ftgo-common shares the following dependencies with ftgo-kitchen-service-api:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-common shares the following dependencies with ftgo-order-history-service:
+	- org.springframework.boot:spring-boot-starter-test
+ftgo-common shares the following dependencies with ftgo-order-service:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- org.springframework.boot:spring-boot-starter-test
+ftgo-common shares the following dependencies with ftgo-order-service-api:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-common shares the following dependencies with ftgo-restaurant-service:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- org.springframework.boot:spring-boot-starter-test
+ftgo-common-jpa shares the following dependencies with ftgo-consumer-service:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-common-jpa shares the following dependencies with ftgo-delivery-service:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-common-jpa shares the following dependencies with ftgo-kitchen-service:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-common-jpa shares the following dependencies with ftgo-kitchen-service-api:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-common-jpa shares the following dependencies with ftgo-order-service:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-common-jpa shares the following dependencies with ftgo-order-service-api:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-common-jpa shares the following dependencies with ftgo-restaurant-service:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-consumer-service shares the following dependencies with ftgo-delivery-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-jdbc-kafka
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.apache.kafka:kafka-clients
+	- io.eventuate.util:eventuate-util-test
+	- io.eventuate.tram.core:eventuate-tram-spring-in-memory
+	- org.springframework.boot:spring-boot-starter-test
+ftgo-consumer-service shares the following dependencies with ftgo-end-to-end-tests:
+	- io.eventuate.util:eventuate-util-test
+	- org.springframework.boot:spring-boot-starter-test
+	- com.jayway.restassured:rest-assured
+	- com.jayway.jsonpath:json-path
+ftgo-consumer-service shares the following dependencies with ftgo-kitchen-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-jdbc-kafka
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- io.eventuate.tram.core:eventuate-tram-spring-messaging
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-orchestration-simple-dsl
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- org.springframework.boot:spring-boot-starter-web
+	- org.springframework.boot:spring-boot-starter-actuator
+	- javax.el:javax.el-api
+	- org.apache.kafka:kafka-clients
+	- io.eventuate.util:eventuate-util-test
+	- io.eventuate.tram.core:eventuate-tram-test-util
+	- io.eventuate.tram.core:eventuate-tram-spring-in-memory
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-in-memory
+	- org.springframework.boot:spring-boot-starter-test
+	- com.jayway.restassured:rest-assured
+	- com.jayway.jsonpath:json-path
+ftgo-consumer-service shares the following dependencies with ftgo-kitchen-service-api:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-consumer-service shares the following dependencies with ftgo-order-history-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- io.eventuate.tram.core:eventuate-tram-spring-messaging
+	- org.springframework.boot:spring-boot-starter-web
+	- org.springframework.boot:spring-boot-starter-actuator
+	- javax.el:javax.el-api
+	- org.apache.kafka:kafka-clients
+	- io.eventuate.util:eventuate-util-test
+	- io.eventuate.tram.core:eventuate-tram-test-util
+	- io.eventuate.tram.core:eventuate-tram-spring-in-memory
+	- org.springframework.boot:spring-boot-starter-test
+	- com.jayway.restassured:rest-assured
+	- com.jayway.jsonpath:json-path
+	- org.hamcrest:hamcrest
+ftgo-consumer-service shares the following dependencies with ftgo-order-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-jdbc-kafka
+	- io.eventuate.tram.core:eventuate-tram-spring-messaging
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-orchestration-simple-dsl
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- org.springframework.boot:spring-boot-starter-web
+	- org.springframework.boot:spring-boot-starter-actuator
+	- javax.el:javax.el-api
+	- org.apache.kafka:kafka-clients
+	- io.eventuate.util:eventuate-util-test
+	- io.eventuate.tram.core:eventuate-tram-test-util
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-in-memory
+	- org.springframework.boot:spring-boot-starter-test
+	- org.hamcrest:hamcrest
+	- io.rest-assured:spring-mock-mvc
+ftgo-consumer-service shares the following dependencies with ftgo-order-service-api:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-consumer-service shares the following dependencies with ftgo-restaurant-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-jdbc-kafka
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- io.eventuate.tram.core:eventuate-tram-spring-messaging
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-orchestration-simple-dsl
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- org.springframework.boot:spring-boot-starter-web
+	- org.springframework.boot:spring-boot-starter-actuator
+	- javax.el:javax.el-api
+	- org.apache.kafka:kafka-clients
+	- io.eventuate.util:eventuate-util-test
+	- io.eventuate.tram.core:eventuate-tram-test-util
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-in-memory
+	- org.springframework.boot:spring-boot-starter-test
+	- com.jayway.restassured:rest-assured
+	- com.jayway.jsonpath:json-path
+ftgo-consumer-service shares the following dependencies with ftgo-restaurant-service-api:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+ftgo-consumer-service-api shares the following dependencies with ftgo-kitchen-service-api:
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-participant
+ftgo-delivery-service shares the following dependencies with ftgo-end-to-end-tests:
+	- org.springframework.boot:spring-boot-starter-test
+	- io.eventuate.util:eventuate-util-test
+ftgo-delivery-service shares the following dependencies with ftgo-kitchen-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- io.eventuate.tram.core:eventuate-tram-spring-jdbc-kafka
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.apache.kafka:kafka-clients
+	- org.springframework.boot:spring-boot-starter-test
+	- io.eventuate.tram.core:eventuate-tram-spring-in-memory
+	- io.eventuate.util:eventuate-util-test
+ftgo-delivery-service shares the following dependencies with ftgo-kitchen-service-api:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-delivery-service shares the following dependencies with ftgo-order-history-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.apache.kafka:kafka-clients
+	- org.springframework.boot:spring-boot-starter-test
+	- io.eventuate.tram.core:eventuate-tram-spring-in-memory
+	- io.eventuate.util:eventuate-util-test
+ftgo-delivery-service shares the following dependencies with ftgo-order-service:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- io.eventuate.tram.core:eventuate-tram-spring-jdbc-kafka
+	- org.springframework.boot:spring-boot-starter-actuator
+	- io.micrometer:micrometer-registry-prometheus
+	- org.apache.kafka:kafka-clients
+	- org.springframework.boot:spring-boot-starter-test
+	- io.eventuate.util:eventuate-util-test
+ftgo-delivery-service shares the following dependencies with ftgo-order-service-api:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-delivery-service shares the following dependencies with ftgo-restaurant-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- io.eventuate.tram.core:eventuate-tram-spring-jdbc-kafka
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.apache.kafka:kafka-clients
+	- org.springframework.boot:spring-boot-starter-test
+	- io.eventuate.util:eventuate-util-test
+ftgo-delivery-service shares the following dependencies with ftgo-restaurant-service-api:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+ftgo-end-to-end-tests shares the following dependencies with ftgo-kitchen-service:
+	- io.eventuate.util:eventuate-util-test
+	- org.springframework.boot:spring-boot-starter-test
+	- com.jayway.restassured:rest-assured
+	- com.jayway.jsonpath:json-path
+ftgo-end-to-end-tests shares the following dependencies with ftgo-order-history-service:
+	- io.eventuate.util:eventuate-util-test
+	- org.springframework.boot:spring-boot-starter-test
+	- com.jayway.restassured:rest-assured
+	- com.jayway.jsonpath:json-path
+ftgo-end-to-end-tests shares the following dependencies with ftgo-order-service:
+	- io.eventuate.util:eventuate-util-test
+	- org.springframework.boot:spring-boot-starter-test
+ftgo-end-to-end-tests shares the following dependencies with ftgo-restaurant-service:
+	- io.eventuate.util:eventuate-util-test
+	- org.springframework.boot:spring-boot-starter-test
+	- com.jayway.restassured:rest-assured
+	- com.jayway.jsonpath:json-path
+ftgo-kitchen-service shares the following dependencies with ftgo-kitchen-service-api:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-kitchen-service shares the following dependencies with ftgo-order-history-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- io.eventuate.tram.core:eventuate-tram-spring-messaging
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.springframework.boot:spring-boot-starter-web
+	- javax.el:javax.el-api
+	- org.apache.kafka:kafka-clients
+	- io.eventuate.util:eventuate-util-test
+	- io.eventuate.tram.core:eventuate-tram-test-util
+	- io.eventuate.tram.core:eventuate-tram-spring-in-memory
+	- org.springframework.boot:spring-boot-starter-test
+	- com.jayway.restassured:rest-assured
+	- com.jayway.jsonpath:json-path
+	- io.eventuate.tram.core:eventuate-tram-spring-testing-support-cloud-contract
+ftgo-kitchen-service shares the following dependencies with ftgo-order-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-jdbc-kafka
+	- io.eventuate.tram.core:eventuate-tram-spring-messaging
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-orchestration-simple-dsl
+	- io.eventuate.tram.core:eventuate-tram-aggregate-domain-events
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.springframework.boot:spring-boot-starter-web
+	- javax.el:javax.el-api
+	- org.apache.kafka:kafka-clients
+	- io.eventuate.util:eventuate-util-test
+	- io.eventuate.tram.core:eventuate-tram-test-util
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-in-memory
+	- org.springframework.boot:spring-boot-starter-test
+	- io.eventuate.tram.core:eventuate-tram-spring-testing-support-cloud-contract
+ftgo-kitchen-service shares the following dependencies with ftgo-order-service-api:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-kitchen-service shares the following dependencies with ftgo-restaurant-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-jdbc-kafka
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- io.eventuate.tram.core:eventuate-tram-spring-messaging
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-orchestration-simple-dsl
+	- io.eventuate.tram.core:eventuate-tram-aggregate-domain-events
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.springframework.boot:spring-boot-starter-web
+	- javax.el:javax.el-api
+	- org.apache.kafka:kafka-clients
+	- io.eventuate.util:eventuate-util-test
+	- io.eventuate.tram.core:eventuate-tram-test-util
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-in-memory
+	- org.springframework.boot:spring-boot-starter-test
+	- com.jayway.restassured:rest-assured
+	- com.jayway.jsonpath:json-path
+	- io.eventuate.tram.core:eventuate-tram-spring-testing-support-cloud-contract
+ftgo-kitchen-service shares the following dependencies with ftgo-restaurant-service-api:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+ftgo-kitchen-service-api shares the following dependencies with ftgo-order-history-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+ftgo-kitchen-service-api shares the following dependencies with ftgo-order-service:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-kitchen-service-api shares the following dependencies with ftgo-order-service-api:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+ftgo-kitchen-service-api shares the following dependencies with ftgo-restaurant-service:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+ftgo-kitchen-service-api shares the following dependencies with ftgo-restaurant-service-api:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+ftgo-order-history-service shares the following dependencies with ftgo-order-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-messaging
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.springframework.boot:spring-boot-starter-web
+	- javax.el:javax.el-api
+	- org.apache.kafka:kafka-clients
+	- io.eventuate.util:eventuate-util-test
+	- io.eventuate.tram.core:eventuate-tram-test-util
+	- org.springframework.boot:spring-boot-starter-test
+	- org.springframework.cloud:spring-cloud-contract-wiremock
+	- org.springframework.cloud:spring-cloud-starter-contract-stub-runner
+	- io.eventuate.tram.core:eventuate-tram-spring-testing-support-cloud-contract
+	- org.hamcrest:hamcrest
+ftgo-order-history-service shares the following dependencies with ftgo-order-service-api:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+ftgo-order-history-service shares the following dependencies with ftgo-restaurant-service:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+	- io.eventuate.tram.core:eventuate-tram-spring-messaging
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.springframework.boot:spring-boot-starter-web
+	- javax.el:javax.el-api
+	- org.apache.kafka:kafka-clients
+	- io.eventuate.util:eventuate-util-test
+	- io.eventuate.tram.core:eventuate-tram-test-util
+	- org.springframework.boot:spring-boot-starter-test
+	- com.jayway.restassured:rest-assured
+	- com.jayway.jsonpath:json-path
+	- io.eventuate.tram.core:eventuate-tram-spring-testing-support-cloud-contract
+ftgo-order-history-service shares the following dependencies with ftgo-restaurant-service-api:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+ftgo-order-service shares the following dependencies with ftgo-order-service-api:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+ftgo-order-service shares the following dependencies with ftgo-restaurant-service:
+	- io.eventuate.tram.core:eventuate-tram-aggregate-domain-events
+	- io.eventuate.tram.core:eventuate-tram-spring-jdbc-kafka
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-orchestration-simple-dsl
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- org.springframework.boot:spring-boot-starter-actuator
+	- org.springframework.boot:spring-boot-starter-web
+	- javax.el:javax.el-api
+	- io.eventuate.tram.core:eventuate-tram-spring-messaging
+	- org.apache.kafka:kafka-clients
+	- io.eventuate.util:eventuate-util-test
+	- io.eventuate.tram.core:eventuate-tram-test-util
+	- io.eventuate.tram.sagas:eventuate-tram-sagas-spring-in-memory
+	- org.springframework.boot:spring-boot-starter-test
+	- io.eventuate.tram.core:eventuate-tram-spring-testing-support-cloud-contract
+ftgo-order-service-api shares the following dependencies with ftgo-restaurant-service:
+	- org.springframework.boot:spring-boot-starter-data-jpa
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+ftgo-order-service-api shares the following dependencies with ftgo-restaurant-service-api:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+ftgo-restaurant-service shares the following dependencies with ftgo-restaurant-service-api:
+	- io.eventuate.tram.core:eventuate-tram-spring-events
+
+
+No API Versioning : 
+-----------------
+*** System uses API versioning, if you consider this valid, you're probably fine.***
+- ftgo-accounting-service has no API versioning
+- ftgo-api-gateway has no API versioning
+- ftgo-consumer-service has no API versioning
+- ftgo-delivery-service has no API versioning
+- ftgo-kitchen-service has no API versioning
+- ftgo-order-history-service has no API versioning
+- ftgo-order-service has no API versioning
+- ftgo-restaurant-service has no API versioning
+
+

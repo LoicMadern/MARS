@@ -1,0 +1,39 @@
+{
+  "system": {
+    "folders": [],
+    "dependencies": [],
+    "language": "",
+    "config_files": [],
+    "http": [],
+    "microservices": [
+      {
+        "name": "",
+        "language": "",
+        "nb_files": "",
+        "locs": "",
+        "dependencies": [],
+        "code": {
+          "imports": [],
+          "annotations": [],
+          "methods": [],
+          "http": [],
+          "databases": {
+            "datasources": [],
+            "create": []
+          },
+          "source_files": []
+        },
+        "config": {
+          "config_files": []
+        },
+        "deployment": {
+          "docker_files": [],
+          "images": []
+        },
+        "env": {
+          "env_files": []
+        }
+      }
+    ]
+  }
+}

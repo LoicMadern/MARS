@@ -1,0 +1,16 @@
+grafana-base
+grafana
+grafana-dashboard-generator
+google-analytics-java
+google-api-services-analytics
+micrometer-registry-prometheus
+prometheus-rsocket-spring
+io.prometheus:simpleclient
+io.prometheus:simpleclient_hotspot
+io.prometheus:simpleclient_common
+io.prometheus:simpleclient_servlet
+io.prometheus:simpleclient_httpserver
+kibana
+zipkin-reporter
+atlas-identities
+heapster

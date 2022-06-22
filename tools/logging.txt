@@ -1,0 +1,14 @@
+agent-api
+appd-client
+weavescope
+grafana-api
+org.opennms.features.endpoints.grafana.api
+zipkin
+spring-cloud-starter-zipkin
+zipkin-sender-okhttp3logstash-logback-encoder
+logstash-logback-encoder
+logstash
+guava
+fluentd
+spectator-api
+spectator-ext-sandbox

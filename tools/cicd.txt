@@ -1,0 +1,9 @@
+jenkins-core
+jenkins
+travis
+travis-ci-versioner
+gocd-task-plugin-api
+circleci.test
+bond
+util-semaphore
+codeship

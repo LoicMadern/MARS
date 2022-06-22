@@ -1,0 +1,16 @@
+zuul-core
+spring-cloud-gateway
+spring-cloud-starter-gateway
+spring-cloud-starter-zuul
+spring-cloud-starter-netflix-zuul
+spring-cloud-netflix-zuul
+zuul-netflix
+vertx-config-kubernetes-configmap
+configuration-k8s-configmap
+com.typesafe:config
+spring-cloud-starter-kubernetes-config
+ingress-nginx
+ingress-default-backend
+istio_2.12
+istio-client
+ambassadorsdk

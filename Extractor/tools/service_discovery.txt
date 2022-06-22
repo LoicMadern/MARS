@@ -1,0 +1,15 @@
+eureka-client
+spring-cloud-starter-eureka
+spring-cloud-starter-netflix-eureka-client
+ribbon-eureka
+eureka-core
+spring-cloud-starter-netflix-eureka-server
+spring-cloud-starter-eureka-server
+spring-cloud-netflix-eureka-client
+eureka-client
+ingress-nginx
+ingress-default-backend
+vertx-config-kubernetes-configmap
+configuration-k8s-configmap
+com.typesafe:config
+spring-cloud-starter-kubernetes-config

@@ -1,0 +1,9 @@
+spring-boot-starter-actuator
+spring-boot-actuator
+spring-cloud-starter-netflix-hystrix
+spring-cloud-starter-hystrix
+turbine-core
+turbine
+ribbon
+istio_2.12
+istio-client

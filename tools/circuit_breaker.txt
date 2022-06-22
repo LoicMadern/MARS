@@ -1,0 +1,5 @@
+spring-cloud-starter-netflix-hystrix
+spring-cloud-starter-hystrix
+resilience4j
+sentinel-core
+org.springframework.retry

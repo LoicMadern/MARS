@@ -1,0 +1,382 @@
+1c enterprise
+4d
+abap
+ags script
+ampl
+antlr
+apl
+asp
+ats
+actionscript
+ada
+agda
+alloy
+alpine abuild
+angelscript
+apex
+apollo guidance computer
+applescript
+arc
+aspectj
+assembly
+asymptote
+augeas
+autohotkey
+autoit
+awk
+ballerina
+batchfile
+befunge
+bison
+bitbake
+blitzbasic
+blitzmax
+bluespec
+boo
+brainfuck
+brightscript
+c
+c#
+c++
+c2hs haskell
+clips
+cmake
+cobol
+cweb
+cap'n proto
+cartocss
+ceylon
+chapel
+charity
+chuck
+cirru
+clarion
+clean
+click
+clojure
+codeql
+coffeescript
+coldfusion
+coldfusion cfc
+common lisp
+common workflow language
+component pascal
+cool
+coq
+crystal
+csound
+csound document
+csound score
+cuda
+cycript
+cython
+d
+digital command language
+dm
+dtrace
+dart
+dataweave
+dhall
+dockerfile
+dogescript
+dylan
+e
+ecl
+eclipse
+eq
+eiffel
+elixir
+elm
+emacs lisp
+emberscript
+erlang
+f#
+f*
+flux
+factor
+fancy
+fantom
+faust
+filebench wml
+filterscript
+forth
+fortran
+freemarker
+frege
+g-code
+gaml
+gams
+gap
+gcc machine description
+gdb
+gdscript
+glsl
+game maker language
+genie
+genshi
+gentoo ebuild
+gentoo eclass
+gherkin
+glyph
+gnuplot
+go
+golo
+gosu
+grace
+grammatical framework
+groovy
+groovy server pages
+hcl
+hlsl
+hack
+harbour
+haskell
+haxe
+hiveql
+holyc
+hy
+hyphy
+idl
+igor pro
+idris
+inform 7
+inno setup
+io
+ioke
+isabelle
+isabelle root
+j
+jflex
+jsoniq
+jsx
+jasmin
+java
+java server pages
+javascript
+javascript+erb
+jison
+jison lex
+jolie
+jsonnet
+julia
+krl
+kotlin
+lfe
+llvm
+lolcode
+lsl
+labview
+lasso
+lean
+lex
+lilypond
+limbo
+literate agda
+literate coffeescript
+literate haskell
+livescript
+logos
+logtalk
+lookml
+loomscript
+lua
+m
+m4
+m4sugar
+matlab
+maxscript
+mlir
+mql4
+mql5
+muf
+makefile
+mako
+mathematica
+max
+mercury
+meson
+metal
+minid
+mirah
+modelica
+modula-2
+modula-3
+module management system
+monkey
+moocode
+moonscript
+motorola 68k assembly
+myghty
+nasl
+ncl
+nsis
+nearley
+nemerle
+netlinx
+netlinx+erb
+netlogo
+newlisp
+nextflow
+nim
+nit
+nix
+nu
+numpy
+ocaml
+objectscript
+objective-c
+objective-c++
+objective-j
+odin
+omgrofl
+opa
+opal
+open policy agent
+opencl
+openedge abl
+openqasm
+openrc runscript
+openscad
+ox
+oxygene
+oz
+p4
+php
+plsql
+plpgsql
+pov-ray sdl
+pan
+papyrus
+parrot
+parrot assembly
+parrot internal representation
+pascal
+pawn
+pep8
+perl
+picolisp
+piglatin
+pike
+pogoscript
+pony
+powerbuilder
+powershell
+processing
+prolog
+propeller spin
+puppet
+purebasic
+purescript
+python
+python console
+qml
+qmake
+quake
+r
+realbasic
+rexx
+rpc
+racket
+ragel
+raku
+rascal
+reason
+rebol
+red
+redcode
+ren'py
+renderscript
+ring
+robotframework
+rouge
+ruby
+rust
+sas
+smt
+sqf
+sqlpl
+swig
+sage
+saltstack
+scala
+scheme
+scilab
+self
+shaderlab
+shell
+shellsession
+shen
+slash
+slice
+smpl
+smali
+smalltalk
+smarty
+solidity
+sourcepawn
+squirrel
+stan
+standard ml
+starlark
+stata
+supercollider
+swift
+systemverilog
+ti program
+tla
+tsql
+tsx
+txl
+tcl
+tcsh
+terra
+thrift
+turing
+typescript
+unified parallel c
+unix assembly
+uno
+unrealscript
+urweb
+v
+vba
+vbscript
+vcl
+vhdl
+vala
+verilog
+vim script
+visual basic .net
+volt
+webassembly
+webidl
+wollok
+x10
+xc
+xproc
+xquery
+xs
+xslt
+xojo
+xtend
+yara
+yacc
+zap
+zil
+zeek
+zenscript
+zephir
+zig
+zimpl
+ec
+fish
+mirc script
+mcfunction
+mupad
+nesc
+ooc
+q
+sed
+wdl
+wisp
+xbase

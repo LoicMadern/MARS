@@ -1,0 +1,6 @@
+*.properties
+*.cnf
+*.conf
+*.sql
+*.yml
+*.yaml
