@@ -70,6 +70,56 @@ class Detector(object):
                     self.vars["hasCiCdFolders"] = True
                     break
 
+    # Rule: (MSa-lng in Programming) AND (MSb-lng NOT IN Programming) AND MSa imports MSb
+    def hasWrongCuts(self):
+        names = [s["name"] for s in self._metamodel["system"]["microservices"]]
+        for service in self._metamodel["system"]["microservices"]:
+            self._hasWrongCuts[service["name"]] = []
+            for name in names:
+                for imp in service["code"]["imports"]:
+                    if name in imp and name != service["name"]:
+                        with open("../tools/languages.txt") as prog:
+                            languages = prog.readlines()
+                            languages = [l.rsplit() for l in languages]
+
+                            if service["language"] in languages and service[name]["language"] not in languages:
+                                self._hasWrongCuts[service].append({
+                                    "from": service["name"],
+                                    "to": name
+                                })
+
+
+    # Rule: Msa imports MSb AND MSb imports MSa
+    def hasCircularDependencies(self):
+        for service in self._metamodel["system"]["microservices"]:
+           self._hasCircularDeps[service["name"]] = []
+           for imp in service["code"]["imports"]:
+               for service2 in self._metamodel["system"]["microservices"]:
+                    for imp2 in service2["code"]["imports"]:
+                        if service["name"] in imp2 and service2["name"] in imp and service["name"]!=service2["name"] :
+                            self._hasCircularDeps[service].append({
+                                "from": service["name"],
+                                "to": service2["name"]
+                            })
+
+
+
+    # Rule : (LOC > (threshold * SysAvgLocs) and NbFiles > (threshold * SysAvgNbFiles))
+    def hasMegaService(self):
+        for service in self._metamodel["system"]["microservices"]:
+            requiredLocs = math.floor(self.MEGA_SERVICE_LOC_THRESHOLD * self.vars["avgLocs"])
+            requiredFiles = math.floor(self.MEGA_SERVICE_FILES_THRESHOLD * self.vars["avgFiles"])
+
+            hasMoreLocsThanAvg = int(service["locs"]) > requiredLocs
+            hasMoreFilesThanAvg = int(service["nb_files"]) > requiredFiles
+
+            if(hasMoreLocsThanAvg and hasMoreFilesThanAvg):
+                self._hasMega[service["name"]] = {
+                    "locs": service["locs"],
+                    "nbFiles": service["nb_files"],
+                    "requiredLocs": requiredLocs,
+                    "requiredFiles": requiredFiles
+                }
 
     # Rule : (LOC < (threshold * SysAvgLocs) and NbFiles < (threshold * SysAvgNbFiles))
     def hasNanoService(self):
@@ -88,23 +138,28 @@ class Detector(object):
                     "requiredFiles": requiredFiles
                 }
 
+    # Rule: MSa uses depX AND MSb uses depX
+    def hasSharedDependencies(self):
+        dict = {}
+        final_dict ={}
 
-    # Rule : (LOC > (threshold * SysAvgLocs) and NbFiles > (threshold * SysAvgNbFiles))
-    def hasMegaService(self):
-        for service in self._metamodel["system"]["microservices"]:
-            requiredLocs = math.floor(self.MEGA_SERVICE_LOC_THRESHOLD * self.vars["avgLocs"])
-            requiredFiles = math.floor(self.MEGA_SERVICE_FILES_THRESHOLD * self.vars["avgFiles"])
+        for i in range(len(self._metamodel["system"]["microservices"])):
 
-            hasMoreLocsThanAvg = int(service["locs"]) > requiredLocs
-            hasMoreFilesThanAvg = int(service["nb_files"]) > requiredFiles
+            name = self._metamodel["system"]["microservices"][i]["name"]
+            deps = self._metamodel["system"]["microservices"][i]["dependencies"]
 
-            if(hasMoreLocsThanAvg and hasMoreFilesThanAvg):
-                self._hasMega[service["name"]] = {
-                    "locs": service["locs"], 
-                    "nbFiles": service["nb_files"], 
-                    "requiredLocs": requiredLocs, 
-                    "requiredFiles": requiredFiles
-                }
+            for i in range(len(deps)) :
+                if deps[i] not in dict :
+                    dict[deps[i]] = (name)
+                elif name not in deps[i]:
+                    dict[deps[i]]+= "\n" + name
+
+        for key in dict   :
+            if len(dict[key].split("\n")) > 1 :
+                final_dict[key] = dict[key]
+
+
+        self._hasSharedLibs = final_dict
 
     # Rule : intersect(Service discovery, dependencies) = 0 AND (count(URLs, source code) > 1 OR count(URLs, config files) > 1)
     def hasHardcodedEndpoints(self):
@@ -139,7 +194,6 @@ class Detector(object):
                         "FoundUrls": ", ".join(self._metamodel["system"]["http"])
                     }
 
-
     # Rule : intersect(Config management, dependencies) = 0 AND count(configuration files, service) > 0
     def hasManualConfiguration(self):
         with open("../tools/configuration.txt", "r") as confTools:
@@ -147,129 +201,134 @@ class Detector(object):
             tools = [line.rstrip() for line in tools]
             res = []
             sysres = []
-            
+
             # Microservice level
             for service in self._metamodel["system"]["microservices"]:
-                for dependency in service["dependencies"]:                
+                for dependency in service["dependencies"]:
                     for tool in tools:
                         if (tool in dependency):
                             res.append(tool)
-            
+
                 if (len(service["config"]["config_files"]) > 0):
                     self._hasManualConfig[service["name"]] = {
                         "hasConfigurationTool": len(res) != 0,
                         "FoundConfigFiles": ", ".join(service["config"]["config_files"])
                     }
-            
+
             # System level
             for dependency in self._metamodel["system"]["dependencies"]:
                 for tool in tools:
                     if (tool in dependency):
                         sysres.append(tool)
-            
+
                 if (len(self._metamodel["system"]["config_files"]) > 0):
                     self._hasManualConfig["system"] = {
                         "hasConfigurationTool": len(sysres) != 0,
                         "FoundConfigFiles": ", ".join(self._metamodel["system"]["config_files"])
-                    }  
+                    }
 
-            
-    # Rule : intersect(API Gateways, dependencies) = 0
+    # Rule : intersect(CI tools, dependencies) = 0 AND intersect(CI folders, system) = 0
+    def hasCiCd(self):
+        with open("../tools/cicd.txt", "r") as sdTools:
+            tools = sdTools.readlines()
+            tools = [line.rstrip() for line in tools]
+            res = []
+
+            # Microservice level
+            for service in self._metamodel["system"]["microservices"]:
+                for dependency in service["dependencies"]:
+                    for tool in tools:
+                        if (tool in dependency):
+                            res.append(tool)
+
+                if (len(res) == 0):
+                    self._hasNoCiCd[service["name"]] = {
+                        "hasCiCdTools": False
+                    }
+
+        # Rule : intersect(API Gateways, dependencies) = 0
+
     def hasApiGateway(self):
         with open("../tools/gateway.txt", "r") as sdTools:
             tools = sdTools.readlines()
             tools = [line.rstrip() for line in tools]
             res = []
             sysres = []
-            
+
             # Microservice level
             for service in self._metamodel["system"]["microservices"]:
-                for dependency in service["dependencies"]:                
+                for dependency in service["dependencies"]:
                     for tool in tools:
                         if (tool in dependency):
                             res.append(tool)
-            
+
                 if (len(res) == 0):
                     self._hasNoApiGateway[service["name"]] = {
                         "hasApiGatewayTool": False
                     }
-            
+
             # System level
             for dependency in self._metamodel["system"]["dependencies"]:
                 for tool in tools:
                     if (tool in dependency):
                         sysres.append(tool)
-            
+
                 if (len(sysres) == 0):
                     self._hasNoApiGateway["system"] = {
                         "hasApiGatewayTool": False
                     }
 
 
-
-    # Rule : intersect(distributed logging tool, dependencies) = 0
-    def hasLocalLogging(self):
-        with open("../tools/logging.txt", "r") as sdTools:
+    # Rule(intersect(Circuit breakers, dependencies) = 0
+    # AND intersect(Fallbacks, methods) = 0) OR (count(timeouts, imports) > 1 OR count(timeouts, methods) > 1)
+    def hasTimeouts(self):
+        with open("../tools/circuit_breaker.txt", "r") as sdTools:
             tools = sdTools.readlines()
             tools = [line.rstrip() for line in tools]
             res = []
             sysres = []
-            
+
             # Microservice level
             for service in self._metamodel["system"]["microservices"]:
-                for dependency in service["dependencies"]:                
+                hasTOImports = False
+                hasTOMethods = False
+                hasFBMethods = False
+                for dependency in service["dependencies"]:
                     for tool in tools:
                         if (tool in dependency):
                             res.append(tool)
-            
-                if (len(res) == 0):
-                    self._hasLocalLogging[service["name"]] = {
-                        "hasLoggingTool": False
+                for imp in service["code"]["imports"]:
+                    if "timeout" in imp.lower():
+                        hasTOImports = True
+                        break
+
+                for meth in service["code"]["methods"]:
+                    if "timeout" in meth.lower():
+                        hasTOMethods = True
+                    if "fallback" in meth.lower():
+                        hasFBMethods = True
+
+                    if hasTOMethods or hasFBMethods:
+                        break
+
+                if ((len(res) == 0 and hasFBMethods) or (hasTOImports or hasTOMethods)):
+                    self._hasTimeouts[service["name"]] = {
+                        "hasCircuitBreakerTool": False,
+                        "hasTOMethods": hasTOMethods,
+                        "hasTOImports": hasTOImports,
+                        "hasFBMethods": hasFBMethods
                     }
-            
+
             # System level
             for dependency in self._metamodel["system"]["dependencies"]:
                 for tool in tools:
                     if (tool in dependency):
                         sysres.append(tool)
-            
-                if (len(sysres) == 0):
-                    self._hasLocalLogging["system"] = {
-                        "hasLoggingTool": False
-                    }
 
+                self._hasTimeouts["system"] = {
+                    "hasCircuitBreaker": len(sysres) != 0
+                }
 
-
-    # Rule : intersect(monitoring libs, dependencies) = 0
-    def hasInsufficientMonitoring(self):
-        with open("../tools/monitoring.txt", "r") as sdTools:
-            tools = sdTools.readlines()
-            tools = [line.rstrip() for line in tools]
-            res = []
-            sysres = []
-            
-            # Microservice level
-            for service in self._metamodel["system"]["microservices"]:
-                for dependency in service["dependencies"]:                
-                    for tool in tools:
-                        if (tool in dependency):
-                            res.append(tool)
-            
-                if (len(res) == 0):
-                    self._hasInsufficientMonitoring[service["name"]] = {
-                        "hasMonitoringTools": False
-                    }
-            
-            # System level
-            for dependency in self._metamodel["system"]["dependencies"]:
-                for tool in tools:
-                    if (tool in dependency):
-                        sysres.append(tool)
-            
-                if (len(sysres) == 0):
-                    self._hasInsufficientMonitoring["system"] = {
-                        "hasMonitoringTools": False
-                    }
 
 
 
@@ -291,202 +350,40 @@ class Detector(object):
             self._hasMultipleInstancesPerHost["system"] = {
                 "systemHasCompose": systemHasCompose
             }
-
-    # Rule : intersect(CI tools, dependencies) = 0 AND intersect(CI folders, system) = 0
-    def hasCiCd(self):
-        with open("../tools/cicd.txt", "r") as sdTools:
-            tools = sdTools.readlines()
-            tools = [line.rstrip() for line in tools]
-            res = []
-            
-            # Microservice level
-            for service in self._metamodel["system"]["microservices"]:
-                for dependency in service["dependencies"]:                
-                    for tool in tools:
-                        if (tool in dependency):
-                            res.append(tool)
-            
-                if (len(res) == 0):
-                    self._hasNoCiCd[service["name"]] = {
-                        "hasCiCdTools": False
-                    }
-
-
-    # intersect(healthcheck libs, system) = 0 OR (count(healthcheck, annotations) < 1 AND count(healthcheck, imports) < 1)
-    def hasHealthCheck(self):
-        with open("../tools/healthcheck.txt", "r") as sdTools:
-            tools = sdTools.readlines()
-            tools = [line.rstrip() for line in tools]
-            res = []
-            sysres = []
-            
-            # Microservice level
-            for service in self._metamodel["system"]["microservices"]:
-                hasHealthImports = False
-                hasHealthAnnotation = False
-                for dependency in service["dependencies"]:                
-                    for tool in tools:
-                        if (tool in dependency):
-                            res.append(tool)
-                for imp in service["code"]["imports"]:
-                    if "health" in imp.lower():
-                        hasHealthImports = True
-                        break
-
-                for ann in service["code"]["annotations"]:
-                    if "health" in ann.lower():
-                        hasHealthAnnotation = True
-                        break
-                                
-            
-                if (len(res) == 0):
-                    self._hasNoHealthCheck[service["name"]] = {
-                        "hasHealthcheckTools": False,
-                        "hasHealthImports": hasHealthImports,
-                        "hasHealthAnnotations": hasHealthAnnotation
-                    }
-            
-            # System level
-            for dependency in self._metamodel["system"]["dependencies"]:
-                for tool in tools:
-                    if (tool in dependency):
-                        sysres.append(tool)
-            
-                if (len(sysres) == 0):
-                    self._hasNoHealthCheck["system"] = {
-                        "hasHealthcheckTools": False
-                    }
-
-
-	# Rule: (MSa-lng in Programming) AND (MSb-lng NOT IN Programming) AND MSa imports MSb
-    def hasWrongCuts(self):
-        names = [s["name"] for s in self._metamodel["system"]["microservices"]]
-        for service in self._metamodel["system"]["microservices"]:
-            self._hasWrongCuts[service["name"]] = []
-            for name in names:
-                for imp in service["code"]["imports"]:
-                    if name in imp and name != service["name"]:
-                        with open("../tools/programming.txt") as prog:
-                            languages = prog.readlines()
-                            languages = [l.rsplit() for l in languages]
-
-                            if service["language"] in languages and service[name]["language"] not in languages:
-                                self._hasWrongCuts[service].append({
-                                    "from": service["name"],
-                                    "to": name
-                                })
-
-
-	# Rule: Msa imports MSb AND MSb imports MSa
-    def hasCircularDependencies(self):
-        names = [s["name"] for s in self._metamodel["system"]["microservices"]]
-        for service in self._metamodel["system"]["microservices"]:
-            self._hasCircularDeps[service["name"]] = []
-            for name in names:
-                for imp in service["code"]["imports"]:
-                    if name in imp and name != service["name"]:
-                        for imp2 in self._metamodel["microservices"][name]["code"]["imports"]:
-                            if service["name"] in imp2:
-                                    self._hasCircularDeps[service].append({
-                                        "from": service["name"],
-                                        "to": name
-                                    })
-
-
-	# Rule: MSa uses depX AND MSb uses depX
-    def hasSharedDependencies(self):
-        for i in range(len(self._metamodel["system"]["microservices"])):
-            name = self._metamodel["system"]["microservices"][i]["name"]
-            self._hasSharedLibs[name] = []
-            deps = self._metamodel["system"]["microservices"][i]["dependencies"]
-            for service in self._metamodel["system"]["microservices"]:
-                if service["name"] == name:
-                    continue
-                deps2 = service["dependencies"]
-
-                overlap = [val for val in deps if val in deps2]
-                
-                if (len(overlap) != 0):
-                    self._hasSharedLibs[name].append({
-                        "from": name,
-                        "to": service["name"],
-                        "shared": overlap
-                    })
+        self._hasMultipleInstancesPerHost["system"] = {
+            "systemHasCompose": systemHasCompose
+        }
 
 
 
-    # Rule(intersect(Circuit breakers, dependencies) = 0 
-    # AND intersect(Fallbacks, methods) = 0) OR (count(timeouts, imports) > 1 OR count(timeouts, methods) > 1)
-    def hasTimeouts(self):
-        with open("../tools/circuit_breaker.txt", "r") as sdTools:
-            tools = sdTools.readlines()
-            tools = [line.rstrip() for line in tools]
-            res = []
-            sysres = []
-            
-            # Microservice level
-            for service in self._metamodel["system"]["microservices"]:
-                hasTOImports = False
-                hasTOMethods = False
-                hasFBMethods = False
-                for dependency in service["dependencies"]:                
-                    for tool in tools:
-                        if (tool in dependency):
-                            res.append(tool)
-                for imp in service["code"]["imports"]:
-                    if "timeout" in imp.lower():
-                        hasTOImports = True
-                        break
 
-                for meth in service["code"]["methods"]:
-                    if "timeout" in meth.lower():
-                        hasTOMethods = True
-                    if "fallback" in meth.lower():
-                        hasFBMethods = True
-                    
-                    if hasTOMethods or hasFBMethods:
-                        break
-                                
-            
-                if ((len(res) == 0 and hasFBMethods) or (hasTOImports or hasTOMethods)):
-                    self._hasTimeouts[service["name"]] = {
-                        "hasCircuitBreakerTool": False,
-                        "hasTOMethods": hasTOMethods,
-                        "hasTOImports": hasTOImports,
-                        "hasFBMethods": hasFBMethods
-                    }
-            
-            # System level
-            for dependency in self._metamodel["system"]["dependencies"]:
-                for tool in tools:
-                    if (tool in dependency):
-                        sysres.append(tool)
-            
-                self._hasTimeouts["system"] = {
-                    "hasCircuitBreaker": len(sysres) != 0
-                }
+
+
+
 
 
     def hasSharedPersistence(self):
+        dict = {}
+        final_dict = {}
+
         for i in range(len(self._metamodel["system"]["microservices"])):
             name = self._metamodel["system"]["microservices"][i]["name"]
-            self._hasSharedPersistence[name] = []
             dbs = self._metamodel["system"]["microservices"][i]["code"]["databases"]["datasources"]
-            for service in self._metamodel["system"]["microservices"]:
-                if service["name"] == name:
-                    continue
-                dbs2 = service["code"]["databases"]["datasources"]
 
-                overlap = [val for val in dbs if val in dbs2]
-                
-                if (len(overlap) != 0):
-                    self._hasSharedPersistence[name].append({
-                        "from": name,
-                        "to": service["name"],
-                        "shared": overlap
-                    })
+            for i in range(len(dbs)) :
+                if dbs[i] not in dict :
+                    dict[dbs[i]] = (name)
+                else :
+                    dict[dbs[i]]+= "\n" + name
 
-    # Rule : count("apiVersion", config) < 1
+        for key in dict   :
+            if len(dict[key].split("\n")) > 1 :
+                final_dict[key] = dict[key]
+
+
+        self._hasSharedPersistence = final_dict
+
+        # Rule : count("apiVersion", config) < 1
     def hasNoApiVersioning(self):
         sysres = False
         for service in self._metamodel["system"]["microservices"]:
@@ -505,7 +402,118 @@ class Detector(object):
 
         self._hasNoApiVersioning["system"] = {
             "hasApiVersioning": sysres
-        }                 
+        }
+
+    # intersect(healthcheck libs, system) = 0 OR (count(healthcheck, annotations) < 1 AND count(healthcheck, imports) < 1)
+    def hasHealthCheck(self):
+        with open("../tools/healthcheck.txt", "r") as sdTools:
+            tools = sdTools.readlines()
+            tools = [line.rstrip() for line in tools]
+            res = []
+            sysres = []
+
+            # Microservice level
+            for service in self._metamodel["system"]["microservices"]:
+                hasHealthImports = False
+                hasHealthAnnotation = False
+                for dependency in service["dependencies"]:
+                    for tool in tools:
+                        if (tool in dependency):
+                            res.append(tool)
+                for imp in service["code"]["imports"]:
+                    if "health" in imp.lower():
+                        hasHealthImports = True
+                        break
+
+                for ann in service["code"]["annotations"]:
+                    if "health" in ann.lower():
+                        hasHealthAnnotation = True
+                        break
+
+                if (len(res) == 0):
+                    self._hasNoHealthCheck[service["name"]] = {
+                        "hasHealthcheckTools": False,
+                        "hasHealthImports": hasHealthImports,
+                        "hasHealthAnnotations": hasHealthAnnotation
+                    }
+
+            # System level
+            for dependency in self._metamodel["system"]["dependencies"]:
+                for tool in tools:
+                    if (tool in dependency):
+                        sysres.append(tool)
+
+                if (len(sysres) == 0):
+                    self._hasNoHealthCheck["system"] = {
+                        "hasHealthcheckTools": False
+                    }
+
+    # Rule : intersect(distributed logging tool, dependencies) = 0
+    def hasLocalLogging(self):
+        with open("../tools/logging.txt", "r") as sdTools:
+            tools = sdTools.readlines()
+            tools = [line.rstrip() for line in tools]
+            res = []
+            sysres = []
+
+            # Microservice level
+            for service in self._metamodel["system"]["microservices"]:
+                for dependency in service["dependencies"]:
+                    for tool in tools:
+                        if (tool in dependency):
+                            res.append(tool)
+
+                if (len(res) == 0):
+                    self._hasLocalLogging[service["name"]] = {
+                        "hasLoggingTool": False
+                    }
+
+            # System level
+            for dependency in self._metamodel["system"]["dependencies"]:
+                for tool in tools:
+                    if (tool in dependency):
+                        sysres.append(tool)
+
+                if (len(sysres) == 0):
+                    self._hasLocalLogging["system"] = {
+                        "hasLoggingTool": False
+                    }
+
+        # Rule : intersect(monitoring libs, dependencies) = 0
+
+    def hasInsufficientMonitoring(self):
+        with open("../tools/monitoring.txt", "r") as sdTools:
+            tools = sdTools.readlines()
+            tools = [line.rstrip() for line in tools]
+            res = []
+            sysres = []
+
+            # Microservice level
+            for service in self._metamodel["system"]["microservices"]:
+                for dependency in service["dependencies"]:
+                    for tool in tools:
+                        if (tool in dependency):
+                            res.append(tool)
+
+                if (len(res) == 0):
+                    self._hasInsufficientMonitoring[service["name"]] = {
+                        "hasMonitoringTools": False
+                    }
+
+            # System level
+            for dependency in self._metamodel["system"]["dependencies"]:
+                for tool in tools:
+                    if (tool in dependency):
+                        sysres.append(tool)
+
+                if (len(sysres) == 0):
+                    self._hasInsufficientMonitoring["system"] = {
+                        "hasMonitoringTools": False
+
+                    }
+
+
+
 
     def getResults(self):
 
@@ -545,28 +553,75 @@ class Detector(object):
         print("Detection summary : ")
         print("===========================")
         print("\n")
-        print("Nano services : ")
-        print("----------------")
-        for k, v in self._hasNano.items():
-            print("- " + k + ": {locs} Locs, {files} Files.".format(locs=v["locs"], files=v["nbFiles"]))
+
+        print("Wrong cuts : ")
+        print("-------------")
+        seenWc = []
+        #print('number of wrongcuts couple found : ' + str(len(self._hasWrongCuts.values())) + '\n')
+        for v in self._hasWrongCuts.values():
+            for pair in v:
+                if ((pair["from"], pair["to"]) not in seenWc):  # Means we didn't already found it
+                    print(pair["from"] + " have a wrong cut with " + pair["to"] + ":")
+                    seenWc.append((pair["from"], pair["to"]))
+                    seenWc.append((pair["to"], pair["from"]))
+        print("\n")
+
+
+        print("Circular Dependencies : ")
+        print("------------------------")
+        seenCD = []
+        #print('Number of circluar dependencies couple found : ' + str(len(self._hasCircularDeps.values())) + '\n')
+        for v in self._hasCircularDeps.values():
+            for pair in v:
+                if((pair["from"],pair["to"]) not in seenCD): # Means we didn't already found it
+                    print(pair["from"] + " have a wrong cut with " + pair["to"] + ":")
+                    seenCD.append((pair["from"],pair["to"]))
+                    seenCD.append((pair["to"],pair["from"]))
+
         print("\n")
 
         print("Mega services : ")
         print("----------------")
+
+        print('Number of mega services found : ' + str(len(self._hasMega.items())) + '\n')
         for k, v in self._hasMega.items():
             print("- " + k + ": {locs} Locs, {files} Files.".format(locs=v["locs"], files=v["nbFiles"]))
-        print("\n")    
+        print("\n")
+
+
+
+        print("Nano services : ")
+        print("----------------")
+        print('Number of nano services found : ' + str(len(self._hasNano.items())) + '\n')
+        for k, v in self._hasNano.items():
+            print("- " + k + ": {locs} Locs, {files} Files.".format(locs=v["locs"], files=v["nbFiles"]))
+        print("\n")
+
+
+
+        print("Shared Dependencies : ")
+        print("----------------------")
+
+
+        print('Number of shared libs found : ' + str(len(self._hasSharedLibs)) + '\n')
+
+        for key in self._hasSharedLibs :
+            print(key  + ": \n" + self._hasSharedLibs[key] +"\n")
+        print("\n")
+
+
 
 
         print("Hardcoded Endpoints : ")
         print("----------------------")
+        print('Number of hardcoded endpoints found : ' + str(len(self._hasHardcodedEndpoints.items())) + '\n')
         for k, v in self._hasHardcodedEndpoints.items():
             print("- " + k)
             print("\t- Has service discovery tool : " + str(v["hasServiceDiscoveryTool"]))
             print("\t- Found URLs in microservice :")
             for url in v["FoundUrls"].split(","):
                 print("\t\t- " + url.strip())
-        print("\n")  
+        print("\n")
 
 
         print("Manual configuration : ")
@@ -577,13 +632,75 @@ class Detector(object):
             print("\t- Found config files in microservice :")
             for url in v["FoundConfigFiles"].split(","):
                 print("\t\t- " + url.strip().split("/")[-1])
-        print("\n")  
+        print("\n")
+
+
+        print("No CI/CD : ")
+        print("-----------")
+        if (self.vars["hasCiCdFolders"]):
+            print("*** System has CI/CD information, however, the following microservices do not.***")
+            print("*** If you consider system wide CI/CD valid, please ignore this antipattern.***")
+        for k, v in self._hasNoCiCd.items():
+            print("- " + k + " has no CI/CD information")
+        print("\n")
+
 
         print("No API Gateway : ")
         print("-----------------")
         for k, v in self._hasNoApiGateway.items():
             print("- " + k + " has no API Gateway tools")
-        print("\n") 
+        print("\n")
+
+
+        print("Timeouts : ")
+        print("-----------------")
+        for k, v in self._hasTimeouts.items():
+            if (k != "system"):
+                print("- " + k + " has possible timeout antipattern:")
+                print("\t- Has Circuit Breaker Tool : " + str(v["hasCircuitBreakerTool"]))
+                print("\t- Has Timeout methods : " + str(v["hasTOMethods"]))
+                print("\t- Has Timeout imports : " + str(v["hasTOImports"]))
+                print("\t- Has Fallback methods : " + str(v["hasFBMethods"]))
+        print("\n")
+
+        print("Multiple instances per host : ")
+        print("--------------------------")
+        if (self._hasMultipleInstancesPerHost["system"]["systemHasCompose"]):
+            print(
+                "*** System has docker compose file. However, the following microservices do not have any dockerfile.***")
+            print("*** This is a warning because the following might be on a shared host.***")
+        for k, v in self._hasMultipleInstancesPerHost.items():
+            print("- " + k + " has no DockerFile")
+        print("\n")
+
+        print("Shared Databases : ")
+        print("-----------------")
+        print('Number of shared databases found : ' + str(len(self._hasSharedPersistence)) + '\n')
+
+        for key in self._hasSharedPersistence:
+            print(key + ": \n" + self._hasSharedPersistence[key] + "\n")
+        print("\n")
+
+
+
+
+        print("No API Versioning : ")
+        print("-----------------")
+        if (self._hasNoApiVersioning["system"]["hasApiVersioning"] == True):
+            print("*** System uses API versioning, if you consider this valid, you're probably fine.***")
+        for k, v in self._hasNoApiVersioning.items():
+            if (k != "system"):
+                print("- " + k + " has no API versioning")
+        print("\n")
+
+
+        print("No HealthCheck : ")
+        print("-----------------")
+        print("*** If you only see system on this list, you're most likely fine.***")
+        for k, v in self._hasNoHealthCheck.items():
+            print("- " + k + " has no healthcheck library")
+        print("\n")
+
 
         print("Local logging : ")
         print("----------------")
@@ -597,103 +714,8 @@ class Detector(object):
             print("- " + k + " has no monitoring tools")
         print("\n") 
 
-        print("No CI/CD : ")
-        print("-----------")
-        if(self.vars["hasCiCdFolders"]):
-            print("*** System has CI/CD information, however, the following microservices do not.***")
-            print("*** If you consider system wide CI/CD valid, please ignore this antipattern.***")
-        for k, v in self._hasNoCiCd.items():
-            print("- " + k + " has no CI/CD information")
-        print("\n") 
-    
-        print("Multiple instances per host : ")
-        print("--------------------------")
-        if(self._hasMultipleInstancesPerHost["system"]["systemHasCompose"]):
-            print("*** System has docker compose file. However, the following microservices do not have any dockerfile.***")
-            print("*** This is a warning because the following might be on a shared host.***")
-        for k, v in self._hasMultipleInstancesPerHost.items():
-            print("- " + k + " has no DockerFile")
-        print("\n") 
-        
-
-        print("No HealthCheck : ")
-        print("-----------------")
-        print("*** If you only see system on this list, you're most likely fine.***")
-        for k, v in self._hasNoHealthCheck.items():
-            print("- " + k + " has no healthcheck library")
-        print("\n")  
-
-        print("Timeouts : ")
-        print("-----------------")
-        for k, v in self._hasTimeouts.items():
-            if(k != "system"):
-                print("- " + k + " has possible timeout antipattern:")
-                print("\t- Has Circuit Breaker Tool : " + str(v["hasCircuitBreakerTool"]))
-                print("\t- Has Timeout methods : " + str(v["hasTOMethods"]))
-                print("\t- Has Timeout imports : " + str(v["hasTOImports"]))
-                print("\t- Has Fallback methods : " + str(v["hasFBMethods"]))
-        print("\n")         
-
-        print("Shared Databases : ")
-        print("-----------------")
-        seen = []
-        for v in self._hasSharedPersistence.values():
-            for pair in v:
-                if((pair["from"],pair["to"]) not in seen): # Means we didn't already found it
-                    print(pair["from"] + " shares the following DBs with " + pair["to"] + ":")
-                    for shared in pair["shared"]:
-                        print("\t- " + shared)
-                    seen.append((pair["from"],pair["to"]))
-                    seen.append((pair["to"],pair["from"]))
-        print("\n")              
-         
-
-        print("Wrong cuts : ")
-        print("-------------")
-        seenWc = []
-        for v in self._hasWrongCuts.values():
-            for pair in v:
-                if((pair["from"],pair["to"]) not in seenWc): # Means we didn't already found it
-                    print(pair["from"] + " have a wrong cut with " + pair["to"] + ":")
-                    seenWc.append((pair["from"],pair["to"]))
-                    seenWc.append((pair["to"],pair["from"]))
-        print("\n")     
-
-        print("Circular Dependencies : ")
-        print("------------------------")
-        seenCD = []
-        for v in self._hasCircularDeps.values():
-            for pair in v:
-                if((pair["from"],pair["to"]) not in seenCD): # Means we didn't already found it
-                    print(pair["from"] + " have a wrong cut with " + pair["to"] + ":")
-                    seenCD.append((pair["from"],pair["to"]))
-                    seenCD.append((pair["to"],pair["from"]))
-        print("\n")              
-       
 
 
-        print("Shared Dependencies : ")
-        print("----------------------")
-        seen = []
-        for v in self._hasSharedLibs.values():
-            for pair in v:
-                if((pair["from"],pair["to"]) not in seen): # Means we didn't already found it
-                    print(pair["from"] + " shares the following dependencies with " + pair["to"] + ":")
-                    for shared in pair["shared"]:
-                        print("\t- " + shared)
-                    seen.append((pair["from"],pair["to"]))
-                    seen.append((pair["to"],pair["from"]))
-        print("\n")     
-
-
-        print("No API Versioning : ")
-        print("-----------------")
-        if (self._hasNoApiVersioning["system"]["hasApiVersioning"] == True):
-            print("*** System uses API versioning, if you consider this valid, you're probably fine.***")
-        for k,v in self._hasNoApiVersioning.items():
-            if (k != "system"):
-                print("- " + k + " has no API versioning")
-        print("\n")               
 
 if __name__ == "__main__":
     

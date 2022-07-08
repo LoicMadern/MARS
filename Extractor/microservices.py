@@ -10,6 +10,7 @@ def extract(root):
     excluded_services = exclude_file.read().split()
     all_services = glob.glob(root + "/*/")
     for service in all_services:
+        print(service)
         ms_name = service.split("/")[-2]
         if ms_name not in excluded_services:
             microservices.append(ms_name)
