@@ -138,28 +138,37 @@ class Detector(object):
                     "requiredFiles": requiredFiles
                 }
 
-    # Rule: MSa uses depX AND MSb uses depX
+    # Rule: Microservices groups using the same dependencie
     def hasSharedDependencies(self):
         dict = {}
         final_dict ={}
 
-        for i in range(len(self._metamodel["system"]["microservices"])):
+        with open("../tools/not_shared_dependencies.txt", "r") as confTools:
+            tools = confTools.readlines()
+            tools = [line.rstrip() for line in tools]
 
-            name = self._metamodel["system"]["microservices"][i]["name"]
-            deps = self._metamodel["system"]["microservices"][i]["dependencies"]
-
-            for i in range(len(deps)) :
-                if deps[i] not in dict :
-                    dict[deps[i]] = (name)
-                elif name not in deps[i]:
-                    dict[deps[i]]+= "\n" + name
-
-        for key in dict   :
-            if len(dict[key].split("\n")) > 1 :
-                final_dict[key] = dict[key]
+            for i in range(len(self._metamodel["system"]["microservices"])):
+                flag_in_tool = False
+                name = self._metamodel["system"]["microservices"][i]["name"]
+                deps = self._metamodel["system"]["microservices"][i]["dependencies"]
 
 
-        self._hasSharedLibs = final_dict
+                for j in range(len(deps)) :
+                    for tool in tools :
+                        if tool in deps[j] :
+                            flag_in_tool =True
+                    if not flag_in_tool :
+                        if deps[j] not in dict :
+                            dict[deps[j]] = name
+                        elif name not in deps[j]:
+                            dict[deps[j]]+= "\n" + name
+
+            for key in dict   :
+                if len(dict[key].split("\n")) > 1 :
+                    final_dict[key] = dict[key]
+
+
+            self._hasSharedLibs = final_dict
 
     # Rule : intersect(Service discovery, dependencies) = 0 AND (count(URLs, source code) > 1 OR count(URLs, config files) > 1)
     def hasHardcodedEndpoints(self):
@@ -245,6 +254,7 @@ class Detector(object):
                     self._hasNoCiCd[service["name"]] = {
                         "hasCiCdTools": False
                     }
+
 
         # Rule : intersect(API Gateways, dependencies) = 0
 
