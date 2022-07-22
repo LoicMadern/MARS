@@ -1,6 +1,9 @@
 import json
 import argparse
 import math
+import pandas as pd
+import networkx as nx
+
 
 class Detector(object):
 
@@ -8,14 +11,14 @@ class Detector(object):
 
     # Nano Service
     # Rule : (LOC < (threshold * SysAvgLocs) and NbFiles < (threshold * SysAvgNbFiles))
-    NANO_SERVICE_LOC_THRESHOLD = 0.5   # If LOCs < Threshold, it's likely a nano service  -- 50% -- Service has 0.5 times lower LOCS
-    NANO_SERVICE_FILES_THRESHOLD = 0.5 # If NbFiles < Threshold, it's likely a nano service -- 50% -- Service has 0.5 times lower LOCS
+    NANO_SERVICE_LOC_THRESHOLD = 0.25   # If LOCs < Threshold, it's likely a nano service  -- 50% -- Service has 0.5 times lower LOCS
+    NANO_SERVICE_FILES_THRESHOLD = 0.25 # If NbFiles < Threshold, it's likely a nano service -- 50% -- Service has 0.5 times lower LOCS
 
 
     # Mega Service
     # Rule : (LOC > (threshold * SysAvgLocs) and NbFiles > (threshold * SysAvgNbFiles))
-    MEGA_SERVICE_LOC_THRESHOLD = 1.5   # If LOCs > Threshold, it's likely a mega service -- 150% -- Service has 1.5 times higher LOCS
-    MEGA_SERVICE_FILES_THRESHOLD = 1.5 # If NbFiles > Threshold, it's likely a mega service -- 150% -- Service has 1.5 times higher FILES
+    MEGA_SERVICE_LOC_THRESHOLD = 2.5  # If LOCs > Threshold, it's likely a mega service -- 150% -- Service has 1.5 times higher LOCS
+    MEGA_SERVICE_FILES_THRESHOLD = 2 # If NbFiles > Threshold, it's likely a mega service -- 150% -- Service has 1.5 times higher FILES
 
 
     # Global needed vars
@@ -91,24 +94,28 @@ class Detector(object):
 
     # Rule: Msa imports MSb AND MSb imports MSa
     def hasCircularDependencies(self):
-        for service in self._metamodel["system"]["microservices"]:
-           self._hasCircularDeps[service["name"]] = []
-           for imp in service["code"]["imports"]:
-               for service2 in self._metamodel["system"]["microservices"]:
-                    for imp2 in service2["code"]["imports"]:
-                        if service["name"] in imp2 and service2["name"] in imp and service["name"]!=service2["name"] :
-                            self._hasCircularDeps[service].append({
-                                "from": service["name"],
-                                "to": service2["name"]
-                            })
+        df = pd.read_csv("../../projects/" + args.project_name + "/final-Graph.csv", delimiter=';', header=None)
+        edges = [tuple(x) for x in df.values]
+        graph = nx.DiGraph(edges)
+
+        cycles = []
+        for cycle in nx.simple_cycles(graph):
+            if (len(cycle) > 1):
+                cycles.append(cycle)
+
+        self._hasCircularDeps = cycles
+
+
 
 
 
     # Rule : (LOC > (threshold * SysAvgLocs) and NbFiles > (threshold * SysAvgNbFiles))
     def hasMegaService(self):
+
         for service in self._metamodel["system"]["microservices"]:
             requiredLocs = math.floor(self.MEGA_SERVICE_LOC_THRESHOLD * self.vars["avgLocs"])
             requiredFiles = math.floor(self.MEGA_SERVICE_FILES_THRESHOLD * self.vars["avgFiles"])
+            requiredLocs = self.vars["totalLocs"]/2
 
             hasMoreLocsThanAvg = int(service["locs"]) > requiredLocs
             hasMoreFilesThanAvg = int(service["nb_files"]) > requiredFiles
@@ -123,20 +130,30 @@ class Detector(object):
 
     # Rule : (LOC < (threshold * SysAvgLocs) and NbFiles < (threshold * SysAvgNbFiles))
     def hasNanoService(self):
-        for service in self._metamodel["system"]["microservices"]:
-            requiredLocs = math.floor(self.NANO_SERVICE_LOC_THRESHOLD * self.vars["avgLocs"])
-            requiredFiles = math.floor(self.NANO_SERVICE_FILES_THRESHOLD * self.vars["avgFiles"])
+        with open("../tools/name_ban_for_nano_services.txt", "r") as confTools:
+            tools = confTools.readlines()
+            tools = [line.rstrip() for line in tools]
+            for service in self._metamodel["system"]["microservices"]:
+                red_flag_service_name = False
+                requiredLocs = math.floor(self.NANO_SERVICE_LOC_THRESHOLD * self.vars["avgLocs"])
+                requiredFiles = math.floor(self.NANO_SERVICE_FILES_THRESHOLD * self.vars["avgFiles"])
 
-            hasLessLocsThanAvg = int(service["locs"]) < requiredLocs
-            hasLessFilesThanAvg = int(service["nb_files"]) < requiredFiles
+                hasLessLocsThanAvg = int(service["locs"]) < requiredLocs
+                hasLessFilesThanAvg = int(service["nb_files"]) < requiredFiles
 
-            if(hasLessLocsThanAvg and hasLessFilesThanAvg):
-                self._hasNano[service["name"]] = {
-                    "locs": service["locs"], 
-                    "nbFiles": service["nb_files"], 
-                    "requiredLocs": requiredLocs, 
-                    "requiredFiles": requiredFiles
-                }
+
+                for tool_name in tools :
+                    if tool_name in service["name"] :
+                        red_flag_service_name = True
+
+
+                if(hasLessLocsThanAvg and hasLessFilesThanAvg and not red_flag_service_name):
+                    self._hasNano[service["name"]] = {
+                        "locs": service["locs"],
+                        "nbFiles": service["nb_files"],
+                        "requiredLocs": requiredLocs,
+                        "requiredFiles": requiredFiles
+                    }
 
     # Rule: Microservices groups using the same dependencie
     def hasSharedDependencies(self):
@@ -414,7 +431,7 @@ class Detector(object):
             "hasApiVersioning": sysres
         }
 
-    # intersect(healthcheck libs, system) = 0 OR (count(healthcheck, annotations) < 1 AND count(healthcheck, imports) < 1)
+    # intersect(healthcheck libs, system) = 0 OR (count(healthcheck, annotations) < 1 OR count(healthcheck, imports) < 1)
     def hasHealthCheck(self):
         with open("../tools/healthcheck.txt", "r") as sdTools:
             tools = sdTools.readlines()
@@ -498,17 +515,6 @@ class Detector(object):
             res = []
             sysres = []
 
-            # Microservice level
-            for service in self._metamodel["system"]["microservices"]:
-                for dependency in service["dependencies"]:
-                    for tool in tools:
-                        if (tool in dependency):
-                            res.append(tool)
-
-                if (len(res) == 0):
-                    self._hasInsufficientMonitoring[service["name"]] = {
-                        "hasMonitoringTools": False
-                    }
 
             # System level
             for dependency in self._metamodel["system"]["dependencies"]:
@@ -516,11 +522,30 @@ class Detector(object):
                     if (tool in dependency):
                         sysres.append(tool)
 
-                if (len(sysres) == 0):
+                if (len(sysres) == 0) :
                     self._hasInsufficientMonitoring["system"] = {
                         "hasMonitoringTools": False
-
                     }
+
+            # Microservice level
+            for service in self._metamodel["system"]["microservices"]:
+                for tool in tools:
+                    if tool in service["name"] :
+                        self._hasInsufficientMonitoring["system"] = {
+                            "hasMonitoringTools": True
+                        }
+                        return
+                    for dependency in service["dependencies"]:
+
+                        if (tool in dependency):
+
+                            res.append(tool)
+
+                if (len(res) == 0):
+                    self._hasInsufficientMonitoring[service["name"]] = {
+                        "hasMonitoringTools": False
+                    }
+
 
 
 
@@ -568,25 +593,30 @@ class Detector(object):
         print("-------------")
         seenWc = []
         #print('number of wrongcuts couple found : ' + str(len(self._hasWrongCuts.values())) + '\n')
-        for v in self._hasWrongCuts.values():
-            for pair in v:
-                if ((pair["from"], pair["to"]) not in seenWc):  # Means we didn't already found it
-                    print(pair["from"] + " have a wrong cut with " + pair["to"] + ":")
-                    seenWc.append((pair["from"], pair["to"]))
-                    seenWc.append((pair["to"], pair["from"]))
-        print("\n")
+        if len(self._hasWrongCuts.values()) == 0 :
+            print("No Wrong Cut was detected \n")
+        else  :
+            print("Wrong Cut was detected \n")
+            for v in self._hasWrongCuts.values():
+                for pair in v:
+                    if ((pair["from"], pair["to"]) not in seenWc):  # Means we didn't already found it
+                        print(pair["from"] + " have a wrong cut with " + pair["to"] + ":")
+                        seenWc.append((pair["from"], pair["to"]))
+                        seenWc.append((pair["to"], pair["from"]))
+            print("\n")
 
 
         print("Circular Dependencies : ")
         print("------------------------")
         seenCD = []
         #print('Number of circluar dependencies couple found : ' + str(len(self._hasCircularDeps.values())) + '\n')
-        for v in self._hasCircularDeps.values():
-            for pair in v:
-                if((pair["from"],pair["to"]) not in seenCD): # Means we didn't already found it
-                    print(pair["from"] + " have a wrong cut with " + pair["to"] + ":")
-                    seenCD.append((pair["from"],pair["to"]))
-                    seenCD.append((pair["to"],pair["from"]))
+        if len(self._hasCircularDeps)!=0 :
+            print("Antipattern detected")
+            for v in self._hasCircularDeps:
+                print(v)
+        else :
+            print("Antipattern NOT detected")
+
 
         print("\n")
 
@@ -647,16 +677,23 @@ class Detector(object):
 
         print("No CI/CD : ")
         print("-----------")
+
+        if len(self._hasNoCiCd.items())  >= self.vars["nbServices"] :
+            print( "*** No CI/CD information were detected***")
+
         if (self.vars["hasCiCdFolders"]):
             print("*** System has CI/CD information, however, the following microservices do not.***")
             print("*** If you consider system wide CI/CD valid, please ignore this antipattern.***")
-        for k, v in self._hasNoCiCd.items():
-            print("- " + k + " has no CI/CD information")
+            for k, v in self._hasNoCiCd.items():
+                print("- " + k + " has no CI/CD information")
+
         print("\n")
 
 
         print("No API Gateway : ")
         print("-----------------")
+        if  len(self._hasNoApiGateway.items()) >= self.vars["nbServices"] :
+            print("Any API Gateway was detected \n")
         for k, v in self._hasNoApiGateway.items():
             print("- " + k + " has no API Gateway tools")
         print("\n")
@@ -676,9 +713,11 @@ class Detector(object):
         print("Multiple instances per host : ")
         print("--------------------------")
         if (self._hasMultipleInstancesPerHost["system"]["systemHasCompose"]):
+
             print(
                 "*** System has docker compose file. However, the following microservices do not have any dockerfile.***")
             print("*** This is a warning because the following might be on a shared host.***")
+
         for k, v in self._hasMultipleInstancesPerHost.items():
             print("- " + k + " has no DockerFile")
         print("\n")
@@ -706,6 +745,9 @@ class Detector(object):
 
         print("No HealthCheck : ")
         print("-----------------")
+
+
+
         print("*** If you only see system on this list, you're most likely fine.***")
         for k, v in self._hasNoHealthCheck.items():
             print("- " + k + " has no healthcheck library")
@@ -720,6 +762,13 @@ class Detector(object):
 
         print("Insufficient monitoring : ")
         print("--------------------------")
+
+        if len(self._hasInsufficientMonitoring.items())  >= self.vars["nbServices"] :
+            print( "*** No monitoring tool was detected***")
+
+        if self._hasInsufficientMonitoring["system"]["hasMonitoringTools"] :
+            print("The microservice has a monitoring service \n")
+
         for k, v in self._hasInsufficientMonitoring.items():
             print("- " + k + " has no monitoring tools")
         print("\n") 
@@ -731,7 +780,7 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
     parser.add_argument("--metamodel", type=str, required=True)
-
+    parser.add_argument("--project_name", type=str, required=True)
     args = parser.parse_args()
 
     metamodel_file = args.metamodel

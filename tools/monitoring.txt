@@ -14,3 +14,7 @@ kibana
 zipkin-reporter
 atlas-identities
 heapster
+monitor
+dashboard
+turbine
+zipkin

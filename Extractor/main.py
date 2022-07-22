@@ -1,3 +1,4 @@
+import argparse
 import os
 import json
 import dependencies
@@ -6,9 +7,13 @@ import javaparser
 import dockerfiles
 import shutil
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--project", type=str, required=True)
 
-mbsroot = "../CurrentMBS/Source"
-metamodel_file = "../metamodel.json"
+args = parser.parse_args()
+
+mbsroot = "../../projects/"+ args.project
+metamodel_file = mbsroot + "/metamodel.json"
 
 if os.path.exists(metamodel_file):
     os.remove(metamodel_file)
@@ -17,7 +22,7 @@ shutil.copy("../blank_metamodel.json", metamodel_file)
 
 
 print("Thank you, excluding folders from analysis...")
-with open("../CurrentMBS/exclude.txt", "r") as excl:
+with open("../../projects/" +  args.project +"/exclude.txt", "r") as excl:
     excluded = excl.readlines()
     excluded = [line.rstrip() for line in excluded]
 
@@ -31,7 +36,7 @@ mm_file = open(metamodel_file, "r")
 mm = json.load(mm_file)
 mm_file.close()
 
-
+mm["gitRepository"] = args.project
 mm["system"]["folders"] = folders
 
 ##################################
@@ -41,6 +46,7 @@ mm["system"]["folders"] = folders
 print("Extracting system wide dependencies")
 system_deps = dependencies.extract(mbsroot)
 print("Dependencies extracted, writing to meta-model")
+
 mm["system"]["dependencies"] = system_deps
 mm_file = open(metamodel_file, "w")
 json.dump(mm, mm_file)

@@ -24,5 +24,5 @@ def clone():
     if request.method == 'POST':
         url = request.form.get('repoUrl')
         subprocess.run(["python3", "../GitImporter/main.py", url], capture_output=False)
-        subfolders = [f.name for f in os.scandir("../CurrentMBS/Source/") if f.is_dir()]
+        subfolders = [f.name for f in os.scandir("../projects/") if f.is_dir()]
     return jsonify(subfolders)

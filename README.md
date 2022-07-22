@@ -9,29 +9,30 @@
 - sudo apt install nodejs (16.14)
 - sudo apt install npm (8.5)
 - sudo apt install cloc
-- cd Mars/Extractor
-- pip install -r requirements.txt
+- pip3 install -r requirements.txt
 - gem install bibliothecary
-- cd ../GitImporter
-- pip install -r requirements.txt
+
 
 #################################
 # RUNNING THE TOOL WITHOUT GUI  #
 #################################
 
-- cd ../gradle_parser
-- npm start
-- in another terminal : 
-    - cd Mars/GitImporter
-    - python main.py URL_OF_GIT_REPO (ex. https://github.com/microservices-patterns/ftgo-application)
-    - cd ../CurrentMBS
-    - vim exclude.txt 
-    - add folders you want to exclude (Each one in a new line)
-    - cd ../Extractor
-    - python main.py
-    - Metamodel should be generated
-    - cd ../Detector
-    - python main.py --metamodel PATH_TO_METAMODEL_FILE | tee outputfile.txt 
-        (ex python main.py --metamodel ../metamodel.json | tee ../output.txt)
-    - check output file for result (less ../output.txt)
 
+#1st step download your project
+- cd ./GitImporter
+- python main.py URL_OF_GIT_REPO (ex. https://github.com/microservices-patterns/ftgo-application)
+
+#2nd prepare your project to be analysed by MARS
+- cd ../projects
+- vim exclude.txt 
+- add folders you want to exclude (Each one in a new line)
+- close vim
+- add callgraph CSV by class with ; separator 
+
+#3th step launch MARS
+- cd ..
+- sudo sh analyze.sh NAME_PROJECT (ex. ftgo-application)
+
+#4th watch the result
+- cd projects/NAME_PROJECT
+- metamodel.json and output have been generated

@@ -1,8 +1,8 @@
-FROM java:8-jre
-VOLUME /tmp
-ENV environment=docker
-ADD target/*.jar app.jar
-#ENV JAVA_OPTS="-XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+PrintGCDetails -XX:+PrintGCTimeStamps"
-ENV JAVA_OPTS="-XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode"
-ENTRYPOINT java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -Dserver.contextPath=/turbine -Dspring.profiles.active=$environment -jar /app.jar
-EXPOSE 8989
+FROM node:10
+WORKDIR /usr/src/app
+COPY package.json ./
+COPY package-lock.json ./
+RUN npm install
+COPY . ./
+EXPOSE 50051
+CMD [ "npm", "start" ]
