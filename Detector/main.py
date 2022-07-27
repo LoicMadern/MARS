@@ -11,8 +11,8 @@ class Detector(object):
 
     # Nano Service
     # Rule : (LOC < (threshold * SysAvgLocs) and NbFiles < (threshold * SysAvgNbFiles))
-    NANO_SERVICE_LOC_THRESHOLD = 0.25   # If LOCs < Threshold, it's likely a nano service  -- 50% -- Service has 0.5 times lower LOCS
-    NANO_SERVICE_FILES_THRESHOLD = 0.25 # If NbFiles < Threshold, it's likely a nano service -- 50% -- Service has 0.5 times lower LOCS
+    NANO_SERVICE_LOC_THRESHOLD = 0.5   # If LOCs < Threshold, it's likely a nano service  -- 50% -- Service has 0.5 times lower LOCS
+    NANO_SERVICE_FILES_THRESHOLD = 0.5 # If NbFiles < Threshold, it's likely a nano service -- 50% -- Service has 0.5 times lower LOCS
 
 
     # Mega Service
@@ -92,20 +92,20 @@ class Detector(object):
                                 })
 
 
+
+
     # Rule: Msa imports MSb AND MSb imports MSa
     def hasCircularDependencies(self):
-        df = pd.read_csv("../../projects/" + args.project_name + "/final-Graph.csv", delimiter=';', header=None)
-        edges = [tuple(x) for x in df.values]
-        graph = nx.DiGraph(edges)
-
-        cycles = []
-        for cycle in nx.simple_cycles(graph):
-            if (len(cycle) > 1):
-                cycles.append(cycle)
-
-        self._hasCircularDeps = cycles
-
-
+        for service in self._metamodel["system"]["microservices"]:
+            self._hasCircularDeps[service["name"]] = []
+            for imp in service["code"]["imports"]:
+                for service2 in self._metamodel["system"]["microservices"]:
+                    for imp2 in service2["code"]["imports"]:
+                        if service["name"] in imp2 and service2["name"] in imp and service["name"] != service2["name"]:
+                            self._hasCircularDeps[service].append({
+                                "from": service["name"],
+                                "to": service2["name"]
+                            })
 
 
 
@@ -115,12 +115,11 @@ class Detector(object):
         for service in self._metamodel["system"]["microservices"]:
             requiredLocs = math.floor(self.MEGA_SERVICE_LOC_THRESHOLD * self.vars["avgLocs"])
             requiredFiles = math.floor(self.MEGA_SERVICE_FILES_THRESHOLD * self.vars["avgFiles"])
-            requiredLocs = self.vars["totalLocs"]/2
 
             hasMoreLocsThanAvg = int(service["locs"]) > requiredLocs
             hasMoreFilesThanAvg = int(service["nb_files"]) > requiredFiles
 
-            if(hasMoreLocsThanAvg and hasMoreFilesThanAvg):
+            if(hasMoreLocsThanAvg ):
                 self._hasMega[service["name"]] = {
                     "locs": service["locs"],
                     "nbFiles": service["nb_files"],
@@ -130,6 +129,8 @@ class Detector(object):
 
     # Rule : (LOC < (threshold * SysAvgLocs) and NbFiles < (threshold * SysAvgNbFiles))
     def hasNanoService(self):
+        #some services as APIs or config service should not be taking in account as a microservice
+        #that why there is list of ban words in order to not counting this kind of occurrences
         with open("../tools/name_ban_for_nano_services.txt", "r") as confTools:
             tools = confTools.readlines()
             tools = [line.rstrip() for line in tools]
@@ -155,7 +156,7 @@ class Detector(object):
                         "requiredFiles": requiredFiles
                     }
 
-    # Rule: Microservices groups using the same dependencie
+    # Rule: Microservices groups using the same dependency
     def hasSharedDependencies(self):
         dict = {}
         final_dict ={}
@@ -165,10 +166,12 @@ class Detector(object):
             tools = [line.rstrip() for line in tools]
 
             for i in range(len(self._metamodel["system"]["microservices"])):
+                #some dependencies are essential to certain services in order to work well
+                #that why some dependencies are not taking in account
+                #with the list from "not_shared_dependencies.txt" and the boolean flag_in_tool
                 flag_in_tool = False
                 name = self._metamodel["system"]["microservices"][i]["name"]
                 deps = self._metamodel["system"]["microservices"][i]["dependencies"]
-
 
                 for j in range(len(deps)) :
                     for tool in tools :
@@ -187,7 +190,7 @@ class Detector(object):
 
             self._hasSharedLibs = final_dict
 
-    # Rule : intersect(Service discovery, dependencies) = 0 AND (count(URLs, source code) > 1 OR count(URLs, config files) > 1)
+    # Rule : intersect(Service discovery, dependencies) = 0 AND (count(URLs, source code) > 0 OR count(URLs, config files) > 0)
     def hasHardcodedEndpoints(self):
         with open("../tools/service_discovery.txt", "r") as sdTools:
             tools = sdTools.readlines()
@@ -195,7 +198,7 @@ class Detector(object):
             res = []
             sysres = []
             
-            # Microservice level
+            # Microservice level (code)
             for service in self._metamodel["system"]["microservices"]:
                 for dependency in service["dependencies"]:                
                     for tool in tools:
@@ -208,7 +211,7 @@ class Detector(object):
                         "FoundUrls": ", ".join(service["code"]["http"])
                     }
             
-            # System level
+            # System level (configuration)
             for dependency in self._metamodel["system"]["dependencies"]:
                 for tool in tools:
                     if (tool in dependency):
@@ -274,7 +277,6 @@ class Detector(object):
 
 
         # Rule : intersect(API Gateways, dependencies) = 0
-
     def hasApiGateway(self):
         with open("../tools/gateway.txt", "r") as sdTools:
             tools = sdTools.readlines()
@@ -307,7 +309,7 @@ class Detector(object):
 
 
     # Rule(intersect(Circuit breakers, dependencies) = 0
-    # AND intersect(Fallbacks, methods) = 0) OR (count(timeouts, imports) > 1 OR count(timeouts, methods) > 1)
+    # AND intersect(Fallbacks, methods) = 0) OR (count(timeouts, imports) > 0 OR count(timeouts, methods) > 0)
     def hasTimeouts(self):
         with open("../tools/circuit_breaker.txt", "r") as sdTools:
             tools = sdTools.readlines()
@@ -359,7 +361,7 @@ class Detector(object):
 
 
 
-    # Rule : intersect(docker-compose.yml, system) = 0 AND intesect(DOCKERFILE, microservices) = 0
+    # Rule : intersect(docker-compose.yml, system) = 0 OR count(DOCKERFILE, microservices) = 0
     def hasMultipleServicesPerHost(self):
         systemHasCompose = False
         for file in self._metamodel["system"]["config_files"]:
@@ -383,12 +385,7 @@ class Detector(object):
 
 
 
-
-
-
-
-
-
+    #MSa uses DBx AND MSb uses DBx OR count(unique(datasource urls), source code) > 1
     def hasSharedPersistence(self):
         dict = {}
         final_dict = {}
@@ -431,7 +428,7 @@ class Detector(object):
             "hasApiVersioning": sysres
         }
 
-    # intersect(healthcheck libs, system) = 0 OR (count(healthcheck, annotations) < 1 OR count(healthcheck, imports) < 1)
+    # intersect(healthcheck libs, system) = 0 
     def hasHealthCheck(self):
         with open("../tools/healthcheck.txt", "r") as sdTools:
             tools = sdTools.readlines()
@@ -441,27 +438,15 @@ class Detector(object):
 
             # Microservice level
             for service in self._metamodel["system"]["microservices"]:
-                hasHealthImports = False
-                hasHealthAnnotation = False
+
                 for dependency in service["dependencies"]:
                     for tool in tools:
                         if (tool in dependency):
                             res.append(tool)
-                for imp in service["code"]["imports"]:
-                    if "health" in imp.lower():
-                        hasHealthImports = True
-                        break
-
-                for ann in service["code"]["annotations"]:
-                    if "health" in ann.lower():
-                        hasHealthAnnotation = True
-                        break
 
                 if (len(res) == 0):
                     self._hasNoHealthCheck[service["name"]] = {
                         "hasHealthcheckTools": False,
-                        "hasHealthImports": hasHealthImports,
-                        "hasHealthAnnotations": hasHealthAnnotation
                     }
 
             # System level
@@ -507,7 +492,6 @@ class Detector(object):
                     }
 
         # Rule : intersect(monitoring libs, dependencies) = 0
-
     def hasInsufficientMonitoring(self):
         with open("../tools/monitoring.txt", "r") as sdTools:
             tools = sdTools.readlines()
@@ -592,9 +576,8 @@ class Detector(object):
         print("Wrong cuts : ")
         print("-------------")
         seenWc = []
-        #print('number of wrongcuts couple found : ' + str(len(self._hasWrongCuts.values())) + '\n')
         if len(self._hasWrongCuts.values()) == 0 :
-            print("No Wrong Cut was detected \n")
+            print("Wrong Cut was not detected \n")
         else  :
             print("Wrong Cut was detected \n")
             for v in self._hasWrongCuts.values():
@@ -608,14 +591,18 @@ class Detector(object):
 
         print("Circular Dependencies : ")
         print("------------------------")
-        seenCD = []
-        #print('Number of circluar dependencies couple found : ' + str(len(self._hasCircularDeps.values())) + '\n')
-        if len(self._hasCircularDeps)!=0 :
-            print("Antipattern detected")
-            for v in self._hasCircularDeps:
-                print(v)
+        if len(self._hasCircularDeps.values()) == 0:
+            print("Circular Depenencies was not detected \n")
+
         else :
-            print("Antipattern NOT detected")
+                print("Circular Depenencies was detected \n")
+                seenCD = []
+                for v in self._hasCircularDeps.values():
+                    for pair in v:
+                        if((pair["from"],pair["to"]) not in seenCD): # Means we didn't already found it
+                            print(pair["from"] + " have a ciruclar dependency with " + pair["to"] + ":")
+                            seenCD.append((pair["from"],pair["to"]))
+                            seenCD.append((pair["to"],pair["from"]))
 
 
         print("\n")
@@ -642,7 +629,6 @@ class Detector(object):
         print("Shared Dependencies : ")
         print("----------------------")
 
-
         print('Number of shared libs found : ' + str(len(self._hasSharedLibs)) + '\n')
 
         for key in self._hasSharedLibs :
@@ -654,7 +640,8 @@ class Detector(object):
 
         print("Hardcoded Endpoints : ")
         print("----------------------")
-        print('Number of hardcoded endpoints found : ' + str(len(self._hasHardcodedEndpoints.items())) + '\n')
+
+        print("Only count the ones who has not a discoveryTool \n")
         for k, v in self._hasHardcodedEndpoints.items():
             print("- " + k)
             print("\t- Has service discovery tool : " + str(v["hasServiceDiscoveryTool"]))
@@ -666,6 +653,8 @@ class Detector(object):
 
         print("Manual configuration : ")
         print("-----------------------")
+
+        print("Only count the ones who has not a configuration tool \n")
         for k, v in self._hasManualConfig.items():
             print("- " + k)
             print("\t- Has configuration tool : " + str(v["hasConfigurationTool"]))
@@ -679,11 +668,12 @@ class Detector(object):
         print("-----------")
 
         if len(self._hasNoCiCd.items())  >= self.vars["nbServices"] :
-            print( "*** No CI/CD information were detected***")
+            print( "No CI/CD information were detected")
 
-        if (self.vars["hasCiCdFolders"]):
-            print("*** System has CI/CD information, however, the following microservices do not.***")
-            print("*** If you consider system wide CI/CD valid, please ignore this antipattern.***")
+        else:
+            print("CI/CD information were detected")
+            if (self.vars["hasCiCdFolders"]):
+                print("*** System has CI/CD information, however, the following microservices do not.***")
             for k, v in self._hasNoCiCd.items():
                 print("- " + k + " has no CI/CD information")
 
@@ -693,7 +683,9 @@ class Detector(object):
         print("No API Gateway : ")
         print("-----------------")
         if  len(self._hasNoApiGateway.items()) >= self.vars["nbServices"] :
-            print("Any API Gateway was detected \n")
+            print("No API Gateway was detected \n")
+        else :
+            print("Some API Gateway were detected however, those services do not :\n")
         for k, v in self._hasNoApiGateway.items():
             print("- " + k + " has no API Gateway tools")
         print("\n")
@@ -701,6 +693,8 @@ class Detector(object):
 
         print("Timeouts : ")
         print("-----------------")
+
+        print("No Timeout was detected \n")
         for k, v in self._hasTimeouts.items():
             if (k != "system"):
                 print("- " + k + " has possible timeout antipattern:")
@@ -712,62 +706,63 @@ class Detector(object):
 
         print("Multiple instances per host : ")
         print("--------------------------")
-        if (self._hasMultipleInstancesPerHost["system"]["systemHasCompose"]):
-
-            print(
-                "*** System has docker compose file. However, the following microservices do not have any dockerfile.***")
-            print("*** This is a warning because the following might be on a shared host.***")
-
-        for k, v in self._hasMultipleInstancesPerHost.items():
-            print("- " + k + " has no DockerFile")
+        if len(self._hasMultipleInstancesPerHost.items()) >= self.vars["nbServices"] or not self._hasMultipleInstancesPerHost["system"]["systemHasCompose"]:
+            print("The antipattern was detected \n")
+        else :
+            print("**The application has not the antipattern multiple instance per host. However, the following microservices do not have any dockerfile.***")
+            for k, v in self._hasMultipleInstancesPerHost.items():
+                print("- " + k + " has no DockerFile")
         print("\n")
+
 
         print("Shared Databases : ")
         print("-----------------")
         print('Number of shared databases found : ' + str(len(self._hasSharedPersistence)) + '\n')
-
         for key in self._hasSharedPersistence:
             print(key + ": \n" + self._hasSharedPersistence[key] + "\n")
         print("\n")
 
 
-
-
         print("No API Versioning : ")
         print("-----------------")
-        if (self._hasNoApiVersioning["system"]["hasApiVersioning"] == True):
-            print("*** System uses API versioning, if you consider this valid, you're probably fine.***")
-        for k, v in self._hasNoApiVersioning.items():
-            if (k != "system"):
-                print("- " + k + " has no API versioning")
+        if len(self._hasNoApiVersioning.items())>=  self.vars["nbServices"] :
+            print("Antipattern detected")
+        else :
+            if len(self._hasNoApiVersioning.items())!=0 :
+                print("Antipattern was not detected. However those services have not a API versionning ")
+            else :
+                print("Antipattern was not detected.")
+            for k, v in self._hasNoApiVersioning.items():
+                if (k != "system"):
+                    print("- " + k + " has no API versioning")
         print("\n")
 
 
         print("No HealthCheck : ")
         print("-----------------")
-
-
-
-        print("*** If you only see system on this list, you're most likely fine.***")
+        print("*** If you only see system on this list, you're most likely fine.\n***")
         for k, v in self._hasNoHealthCheck.items():
-            print("- " + k + " has no healthcheck library")
-        print("\n")
+            print("- " + k + " has no healthcheck library \n")
 
 
         print("Local logging : ")
         print("----------------")
-        for k, v in self._hasLocalLogging.items():
-            print("- " + k + " has no logging tools")
+        if len(self._hasInsufficientMonitoring.items()) >= self.vars["nbServices"]:
+            print("No logging tool was detected \n")
+        else :
+            print("The application has a logging tool but : \n")
+            for k, v in self._hasLocalLogging.items():
+                print("- " + k + " has no logging tools")
         print("\n") 
 
         print("Insufficient monitoring : ")
         print("--------------------------")
 
         if len(self._hasInsufficientMonitoring.items())  >= self.vars["nbServices"] :
-            print( "*** No monitoring tool was detected***")
+            print( "No monitoring tool was detected\n")
 
         if self._hasInsufficientMonitoring["system"]["hasMonitoringTools"] :
-            print("The microservice has a monitoring service \n")
+            print("The application has a monitoring service \n")
 
         for k, v in self._hasInsufficientMonitoring.items():
             print("- " + k + " has no monitoring tools")
