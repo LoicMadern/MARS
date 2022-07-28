@@ -1,0 +1,15 @@
+js
+x
+vue
+cs
+vss
+css
+html
+png
+json
+xml
+eot
+woff
+woff2
+regular
+min

@@ -2,6 +2,7 @@ import json
 import argparse
 import math
 import pandas as pd
+from os import walk
 import networkx as nx
 
 
@@ -75,37 +76,70 @@ class Detector(object):
 
     # Rule: (MSa-lng in Programming) AND (MSb-lng NOT IN Programming) AND MSa imports MSb
     def hasWrongCuts(self):
+
+        root = "../../projects/" + args.project_name + "/"
+        folders = []
         names = [s["name"] for s in self._metamodel["system"]["microservices"]]
-        for service in self._metamodel["system"]["microservices"]:
-            self._hasWrongCuts[service["name"]] = []
-            for name in names:
-                for imp in service["code"]["imports"]:
-                    if name in imp and name != service["name"]:
-                        with open("../tools/languages.txt") as prog:
-                            languages = prog.readlines()
-                            languages = [l.rsplit() for l in languages]
 
-                            if service["language"] in languages and service[name]["language"] not in languages:
-                                self._hasWrongCuts[service].append({
-                                    "from": service["name"],
-                                    "to": name
-                                })
+        flag_folders = []
+
+        for service in names:
+            listeFichiers = []
+            for (repertoire, sousRepertoires, fichiers) in walk(root + str(service)):
+                listeFichiers.extend(fichiers)
+
+            number_files = len(listeFichiers)
+            dict = {}
+            cpt = 0
+
+            for fichier in listeFichiers:
+                if "." in fichier:
+                    extension = fichier.split(".")[1]
+                    if extension not in dict:
+                        dict[extension] = 1
+                    else:
+                        dict[extension] += 1
+
+            for key in dict:
+
+                with open("../tools/config_extensions.txt", "r") as confTools:
+                    tools_extension = confTools.readlines()
+                    tools_extension = [line.rstrip() for line in tools_extension]
+
+                    for tool_extension in tools_extension :
+                        if key == tool_extension :
+                            number_files -= 1
+
+                with open("../tools/web_extensions.txt", "r") as webTools:
+                    tools_web = webTools.readlines()
+                    tools_web = [line.rstrip() for line in tools_web]
+
+                    for tool_web in tools_web:
+                        if key == tool_web:
+                            cpt += dict[key]
+
+                if cpt > number_files * 0.8 and service not in flag_folders:
+                    flag_folders.append(service)
 
 
-
+        self._hasWrongCuts = flag_folders
 
     # Rule: Msa imports MSb AND MSb imports MSa
     def hasCircularDependencies(self):
-        for service in self._metamodel["system"]["microservices"]:
-            self._hasCircularDeps[service["name"]] = []
-            for imp in service["code"]["imports"]:
-                for service2 in self._metamodel["system"]["microservices"]:
-                    for imp2 in service2["code"]["imports"]:
-                        if service["name"] in imp2 and service2["name"] in imp and service["name"] != service2["name"]:
-                            self._hasCircularDeps[service].append({
-                                "from": service["name"],
-                                "to": service2["name"]
-                            })
+        root = "../../projects/" + args.project_name + "/"
+        df = pd.read_csv(root + "calls.csv", delimiter=',', header=None)
+        tab = []
+        final_tab = []
+        for value in df.values:
+            if [value[0].split("/")[0], value[1].split("/")[0]] not in tab and value[0].split("/")[0] != \
+                    value[1].split("/")[0]:
+                tab.append([value[0].split("/")[0], value[1].split("/")[0]])
+        for element in tab:
+            if [element[1], element[0]] in tab and not [element[1], element[0]] in final_tab or [element[0], element[
+                1]] in final_tab:
+                final_tab.append(element)
+        self._hasCircularDeps = final_tab
+
 
 
 
@@ -113,13 +147,13 @@ class Detector(object):
     def hasMegaService(self):
 
         for service in self._metamodel["system"]["microservices"]:
-            requiredLocs = math.floor(self.MEGA_SERVICE_LOC_THRESHOLD * self.vars["avgLocs"])
+            requiredLocs =  requiredLocs = self.vars["totalLocs"] *0.39
             requiredFiles = math.floor(self.MEGA_SERVICE_FILES_THRESHOLD * self.vars["avgFiles"])
 
             hasMoreLocsThanAvg = int(service["locs"]) > requiredLocs
             hasMoreFilesThanAvg = int(service["nb_files"]) > requiredFiles
 
-            if(hasMoreLocsThanAvg ):
+            if(hasMoreLocsThanAvg and  "demo" not in service["name"]):
                 self._hasMega[service["name"]] = {
                     "locs": service["locs"],
                     "nbFiles": service["nb_files"],
@@ -428,7 +462,7 @@ class Detector(object):
             "hasApiVersioning": sysres
         }
 
-    # intersect(healthcheck libs, system) = 0 
+    # intersect(healthcheck libs, system) = 0
     def hasHealthCheck(self):
         with open("../tools/healthcheck.txt", "r") as sdTools:
             tools = sdTools.readlines()
@@ -576,33 +610,24 @@ class Detector(object):
         print("Wrong cuts : ")
         print("-------------")
         seenWc = []
-        if len(self._hasWrongCuts.values()) == 0 :
+        if len(self._hasWrongCuts) == 0 :
             print("Wrong Cut was not detected \n")
         else  :
             print("Wrong Cut was detected \n")
-            for v in self._hasWrongCuts.values():
-                for pair in v:
-                    if ((pair["from"], pair["to"]) not in seenWc):  # Means we didn't already found it
-                        print(pair["from"] + " have a wrong cut with " + pair["to"] + ":")
-                        seenWc.append((pair["from"], pair["to"]))
-                        seenWc.append((pair["to"], pair["from"]))
-            print("\n")
+            for v in self._hasWrongCuts:
+                print(v)
+        print("\n")
 
 
         print("Circular Dependencies : ")
         print("------------------------")
-        if len(self._hasCircularDeps.values()) == 0:
+        if len(self._hasCircularDeps) == 0:
             print("Circular Depenencies was not detected \n")
 
         else :
-                print("Circular Depenencies was detected \n")
-                seenCD = []
-                for v in self._hasCircularDeps.values():
-                    for pair in v:
-                        if((pair["from"],pair["to"]) not in seenCD): # Means we didn't already found it
-                            print(pair["from"] + " have a ciruclar dependency with " + pair["to"] + ":")
-                            seenCD.append((pair["from"],pair["to"]))
-                            seenCD.append((pair["to"],pair["from"]))
+            print("Circular Depenencies was detected \n")
+            for value in self._hasCircularDeps :
+                print(value)
 
 
         print("\n")
@@ -683,7 +708,7 @@ class Detector(object):
         print("No API Gateway : ")
         print("-----------------")
         if  len(self._hasNoApiGateway.items()) >= self.vars["nbServices"] :
-            print("No API Gateway was detected \n")
+            print("The antipattern was detected \n")
         else :
             print("Some API Gateway were detected however, those services do not :\n")
         for k, v in self._hasNoApiGateway.items():
@@ -742,15 +767,15 @@ class Detector(object):
         print("-----------------")
         print("*** If you only see system on this list, you're most likely fine.\n***")
         for k, v in self._hasNoHealthCheck.items():
-            print("- " + k + " has no healthcheck library \n")
-
+            print("- " + k + " has no healthcheck library")
+        print("\n")
 
         print("Local logging : ")
         print("----------------")
-        if len(self._hasInsufficientMonitoring.items()) >= self.vars["nbServices"]:
-            print("No logging tool was detected \n")
+        if len(self._hasLocalLogging.items())  >= self.vars["nbServices"] :
+            print( "No monitoring tool was detected\n")
         else :
-            print("The application has a logging tool but : \n")
+            print("A monitoring tool was detected\n")
             for k, v in self._hasLocalLogging.items():
                 print("- " + k + " has no logging tools")
         print("\n") 
@@ -761,12 +786,11 @@ class Detector(object):
         if len(self._hasInsufficientMonitoring.items())  >= self.vars["nbServices"] :
             print( "No monitoring tool was detected\n")
 
-        if self._hasInsufficientMonitoring["system"]["hasMonitoringTools"] :
-            print("The application has a monitoring service \n")
-
-        for k, v in self._hasInsufficientMonitoring.items():
-            print("- " + k + " has no monitoring tools")
-        print("\n") 
+        else :
+            print("The application has a monitoring service but some don't have \n")
+            for k, v in self._hasInsufficientMonitoring.items():
+                print("- " + k + " has no monitoring tools")
+            print("\n")
 
 
 
