@@ -79,15 +79,11 @@ class Detector(object):
 
         root = "../../projects/" + args.project_name + "/"
         folders = []
-        names = [s["name"] for s in self._metamodel["system"]["microservices"]]
-
         flag_folders = []
+        microservices = self._metamodel["system"]["microservices"]
 
-        for service in names:
-            listeFichiers = []
-            for (repertoire, sousRepertoires, fichiers) in walk(root + str(service)):
-                listeFichiers.extend(fichiers)
-
+        for service in range(len(microservices)):
+            listeFichiers = microservices[service]["code"]["source_files"]
             number_files = len(listeFichiers)
             dict = {}
             cpt = 0
@@ -118,9 +114,9 @@ class Detector(object):
                         if key == tool_web:
                             cpt += dict[key]
 
-                if cpt > number_files * 0.8 and service not in flag_folders:
-                    flag_folders.append(service)
 
+            if cpt > number_files * 0.8 and microservices[service]["name"] not in flag_folders:
+                flag_folders.append(microservices[service]["name"])
 
         self._hasWrongCuts = flag_folders
 
@@ -666,7 +662,7 @@ class Detector(object):
         print("Hardcoded Endpoints : ")
         print("----------------------")
 
-        print("Only count the ones who has not a discoveryTool \n")
+        print("Only count the ones which has not a discoveryTool \n")
         for k, v in self._hasHardcodedEndpoints.items():
             print("- " + k)
             print("\t- Has service discovery tool : " + str(v["hasServiceDiscoveryTool"]))
@@ -679,7 +675,7 @@ class Detector(object):
         print("Manual configuration : ")
         print("-----------------------")
 
-        print("Only count the ones who has not a configuration tool \n")
+        print("Only count the ones which has not a configuration tool \n")
         for k, v in self._hasManualConfig.items():
             print("- " + k)
             print("\t- Has configuration tool : " + str(v["hasConfigurationTool"]))

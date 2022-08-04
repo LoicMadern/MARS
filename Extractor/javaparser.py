@@ -2,8 +2,17 @@ import glob
 import javalang
 import re
 
+import os.path
+from os import walk
 
 def getsourcefiles(service_path):
+    listeFichiers = []
+    for (repertoire, sousRepertoires, fichiers) in walk(service_path):
+        listeFichiers.extend(fichiers)
+    return listeFichiers
+
+
+def getjavasourcefiles(service_path):
     source_files = []
     with open("files_needles/source_files.txt", "r") as files:
         possibles = files.read().splitlines()
@@ -12,7 +21,8 @@ def getsourcefiles(service_path):
             for f in fileslist:
                 if "test" not in f.lower():
                     source_files.append(f)
-        return source_files
+    return source_files
+
 
 def getconfigfiles(service_path):
     config_files = []

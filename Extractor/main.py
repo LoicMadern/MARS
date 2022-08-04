@@ -112,8 +112,12 @@ for microservice in system_ms:
     ms_data["env"] = dict()
     ms_data["env"]["env_files"] = javaparser.getenvfiles(service_path)
     # For every source file in this microservice
-    for source in ms_data["code"]["source_files"]:
+
+    java_source_file = javaparser.getjavasourcefiles(service_path)
+
+    for source in java_source_file:
         # Build his AST tree
+
         tree = javaparser.parse(source)
         ms_data["code"]["annotations"] += javaparser.getannotations(tree)
         ms_data["code"]["methods"] += javaparser.getmethods(tree)
@@ -124,7 +128,7 @@ for microservice in system_ms:
         ms_data["code"]["methods"] = list(dict.fromkeys(ms_data["code"]["methods"]))
         ms_data["code"]["imports"] = list(dict.fromkeys(ms_data["code"]["imports"]))
 
-    httpdb_related = ms_data["code"]["source_files"] + ms_data["config"]["config_files"] + ms_data["env"]["env_files"]
+    httpdb_related = java_source_file + ms_data["config"]["config_files"] + ms_data["env"]["env_files"]
     for f in httpdb_related:
         http = javaparser.gethttpdb(f)
         ms_data["code"]["http"] += http
