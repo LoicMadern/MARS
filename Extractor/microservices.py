@@ -34,6 +34,7 @@ def getlocs(service):
     if "-----" in output:
         lines = output.splitlines()
         for line in lines:
-            if line.lower().startswith("java"):
+            if line.startswith("SUM"):
                 values = re.findall('\d+', line)
+
     return values

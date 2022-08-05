@@ -149,7 +149,7 @@ class Detector(object):
             hasMoreLocsThanAvg = int(service["locs"]) > requiredLocs
             hasMoreFilesThanAvg = int(service["nb_files"]) > requiredFiles
 
-            if(hasMoreLocsThanAvg and  "demo" not in service["name"]):
+            if(hasMoreLocsThanAvg and  ("demo" not in service["name"] and "command" not in service["name"])):
                 self._hasMega[service["name"]] = {
                     "locs": service["locs"],
                     "nbFiles": service["nb_files"],
@@ -394,12 +394,23 @@ class Detector(object):
     # Rule : intersect(docker-compose.yml, system) = 0 OR count(DOCKERFILE, microservices) = 0
     def hasMultipleServicesPerHost(self):
         systemHasCompose = False
+        self._hasMultipleInstancesPerHost["docker_directory"] = {
+            "existence": False
+        }
+        for service in self._metamodel["system"]["microservices"]:
+            if service["name"] == "Docker" or service["name"] == "docker":
+                self._hasMultipleInstancesPerHost["docker_directory"] = {
+                    "existence": True
+                }
+
         for file in self._metamodel["system"]["config_files"]:
             if "docker-compose.yml" in file:
                 systemHasCompose = True
 
             # Microservice level
             for service in self._metamodel["system"]["microservices"]:
+
+
                 if len(service["deployment"]["docker_files"]) == 0:
 
                     self._hasMultipleInstancesPerHost[service["name"]] = {
@@ -674,7 +685,6 @@ class Detector(object):
 
         print("Manual configuration : ")
         print("-----------------------")
-
         print("Only count the ones which has not a configuration tool \n")
         for k, v in self._hasManualConfig.items():
             print("- " + k)
@@ -689,7 +699,7 @@ class Detector(object):
         print("-----------")
 
         if len(self._hasNoCiCd.items())  >= self.vars["nbServices"] :
-            print( "No CI/CD information were detected")
+            print("The antipattern was detected\n")
 
         else:
             print("CI/CD information were detected")
@@ -714,25 +724,29 @@ class Detector(object):
 
         print("Timeouts : ")
         print("-----------------")
+        if len(self._hasTimeouts.items())==1 or (len(self._hasTimeouts.items())>1 and self._hasTimeouts["system"]["hasCircuitBreaker"]):
+            print("The antipattern was not detected\n")
+        else :
+            print("Timeout antipattern was detected \n")
+            for k, v in self._hasTimeouts.items():
 
-        print("No Timeout was detected \n")
-        for k, v in self._hasTimeouts.items():
-            if (k != "system"):
-                print("- " + k + " has possible timeout antipattern:")
-                print("\t- Has Circuit Breaker Tool : " + str(v["hasCircuitBreakerTool"]))
-                print("\t- Has Timeout methods : " + str(v["hasTOMethods"]))
-                print("\t- Has Timeout imports : " + str(v["hasTOImports"]))
-                print("\t- Has Fallback methods : " + str(v["hasFBMethods"]))
+                if k!="system" :
+                    print("- " + k + " has possible timeout antipattern:")
+                    print("\t- Has Circuit Breaker Tool : " + str(v["hasCircuitBreakerTool"]))
+                    print("\t- Has Timeout methods : " + str(v["hasTOMethods"]))
+                    print("\t- Has Timeout imports : " + str(v["hasTOImports"]))
+                    print("\t- Has Fallback methods : " + str(v["hasFBMethods"]))
         print("\n")
 
         print("Multiple instances per host : ")
         print("--------------------------")
-        if len(self._hasMultipleInstancesPerHost.items()) >= self.vars["nbServices"] or not self._hasMultipleInstancesPerHost["system"]["systemHasCompose"]:
+        if (len(self._hasMultipleInstancesPerHost.items()) >= self.vars["nbServices"] or not self._hasMultipleInstancesPerHost["system"]["systemHasCompose"]) and not self._hasMultipleInstancesPerHost["docker_directory"]["existence"]:
             print("The antipattern was detected \n")
         else :
             print("**The application has not the antipattern multiple instance per host. However, the following microservices do not have any dockerfile.***")
             for k, v in self._hasMultipleInstancesPerHost.items():
-                print("- " + k + " has no DockerFile")
+                if not "docker_directory" in k :
+                    print("- " + k + " has no DockerFile")
         print("\n")
 
 
@@ -761,17 +775,20 @@ class Detector(object):
 
         print("No HealthCheck : ")
         print("-----------------")
-        print("*** If you only see system on this list, you're most likely fine.\n***")
-        for k, v in self._hasNoHealthCheck.items():
-            print("- " + k + " has no healthcheck library")
+        if len(self._hasNoHealthCheck.items()) == 0:
+            print("The antipattern was detected\n")
+        else :
+            print("*** If you only see system on this list, you're most likely fine.\n***")
+            for k, v in self._hasNoHealthCheck.items():
+                print("- " + k + " has no healthcheck library")
         print("\n")
 
         print("Local logging : ")
         print("----------------")
         if len(self._hasLocalLogging.items())  >= self.vars["nbServices"] :
-            print( "No monitoring tool was detected\n")
+            print("The antipattern was detected\n")
         else :
-            print("A monitoring tool was detected\n")
+            print("A logging tool was detected but it's possible some has not\n")
             for k, v in self._hasLocalLogging.items():
                 print("- " + k + " has no logging tools")
         print("\n") 
@@ -780,7 +797,7 @@ class Detector(object):
         print("--------------------------")
 
         if len(self._hasInsufficientMonitoring.items())  >= self.vars["nbServices"] :
-            print( "No monitoring tool was detected\n")
+            print( "The antipattern was detected\n")
 
         else :
             print("The application has a monitoring service but some don't have \n")
