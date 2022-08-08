@@ -74,7 +74,7 @@ class Detector(object):
                     self.vars["hasCiCdFolders"] = True
                     break
 
-    # Rule: (MSa-lng in Programming) AND (MSb-lng NOT IN Programming) AND MSa imports MSb
+    # Rule: pourcentage_of_extensions_web_files > THR * NUMBER_FILES
     def hasWrongCuts(self):
 
         root = "../../projects/" + args.project_name + "/"
@@ -391,27 +391,21 @@ class Detector(object):
 
 
 
-    # Rule : intersect(docker-compose.yml, system) = 0 OR count(DOCKERFILE, microservices) = 0
+    # Rule : intersect(docker-compose.yml, system) = 0 AND count(DOCKERFILE, microservices) = 0
     def hasMultipleServicesPerHost(self):
         systemHasCompose = False
         self._hasMultipleInstancesPerHost["docker_directory"] = {
             "existence": False
         }
-        for service in self._metamodel["system"]["microservices"]:
-            if service["name"] == "Docker" or service["name"] == "docker":
-                self._hasMultipleInstancesPerHost["docker_directory"] = {
-                    "existence": True
-                }
+
 
         for file in self._metamodel["system"]["config_files"]:
             if "docker-compose.yml" in file:
                 systemHasCompose = True
-
-            # Microservice level
             for service in self._metamodel["system"]["microservices"]:
+            # Microservice level
 
-
-                if len(service["deployment"]["docker_files"]) == 0:
+                if len(service["deployment"]["docker_files"]) == 0 :
 
                     self._hasMultipleInstancesPerHost[service["name"]] = {
                         "hasDockerFile": False
@@ -698,13 +692,12 @@ class Detector(object):
         print("No CI/CD : ")
         print("-----------")
 
-        if len(self._hasNoCiCd.items())  >= self.vars["nbServices"] :
-            print("The antipattern was detected\n")
+        if len(self._hasNoCiCd.items())  >= self.vars["nbServices"] and not self.vars["hasCiCdFolders"] :
+            print("Antipattern detected")
 
         else:
             print("CI/CD information were detected")
-            if (self.vars["hasCiCdFolders"]):
-                print("*** System has CI/CD information, however, the following microservices do not.***")
+            print("*** System has CI/CD information, however, the following microservices do not.***")
             for k, v in self._hasNoCiCd.items():
                 print("- " + k + " has no CI/CD information")
 
@@ -740,8 +733,9 @@ class Detector(object):
 
         print("Multiple instances per host : ")
         print("--------------------------")
-        if (len(self._hasMultipleInstancesPerHost.items()) >= self.vars["nbServices"] or not self._hasMultipleInstancesPerHost["system"]["systemHasCompose"]) and not self._hasMultipleInstancesPerHost["docker_directory"]["existence"]:
+        if (len(self._hasMultipleInstancesPerHost.items()) >= self.vars["nbServices"] ) :
             print("The antipattern was detected \n")
+
         else :
             print("**The application has not the antipattern multiple instance per host. However, the following microservices do not have any dockerfile.***")
             for k, v in self._hasMultipleInstancesPerHost.items():

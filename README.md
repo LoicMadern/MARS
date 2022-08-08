@@ -17,21 +17,27 @@
 # RUNNING THE TOOL WITHOUT GUI  #
 #################################
 
+#0 create a folder at the same level as MARS-fork
 
-#1st step download your project
+#example : if we do ls command in a terminal we should have:
+- MARS-fork
+- prokect
+
+#1st step download your project in a folder that would be in projects folder
+- create an empty folder where the project will be download
 - cd ./GitImporter
-- python main.py URL_OF_GIT_REPO (ex. https://github.com/microservices-patterns/ftgo-application)
+- python main.py URL_OF_GIT_REPO (ex. https://github.com/microservices-patterns/ftgo-application) FOLDER_NAME_WHERE_THE_PROJECT_WILL_BE_STORED (ex: ftgo)
 
 #2nd prepare your project to be analysed by MARS
-- cd ../projects
+- cd ../projects/project_name
 - vim exclude.txt 
 - add folders you want to exclude (Each one in a new line)
 - close vim
-- add callgraph CSV by class with ; separator 
+- add a CSV callgraphs by package with , separator named calls
 
 #3th step launch MARS
 - cd ..
-- sudo sh analyze.sh NAME_PROJECT (ex. ftgo-application)
+- sudo sh analyze.sh NAME_FOLDER_PROJECT (ex. ftgo-application) 
 
 #4th watch the result
 - cd projects/NAME_PROJECT
