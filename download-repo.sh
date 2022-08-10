@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-rm -r CurrentMBS/Source
+mkdir ../projects
 cd GitImporter/
-python3 ./main.py $1
+python3 ./main.py $1 $2
+touch ../../projects/$2/metamodel.json
+touch ../../projects/$2/exclude.txt
 cd ..
 $SHELL

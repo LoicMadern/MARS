@@ -16,12 +16,6 @@ class Detector(object):
     NANO_SERVICE_FILES_THRESHOLD = 0.5 # If NbFiles < Threshold, it's likely a nano service -- 50% -- Service has 0.5 times lower LOCS
 
 
-    # Mega Service
-    # Rule : (LOC > (threshold * SysAvgLocs) and NbFiles > (threshold * SysAvgNbFiles))
-    MEGA_SERVICE_LOC_THRESHOLD = 2.5  # If LOCs > Threshold, it's likely a mega service -- 150% -- Service has 1.5 times higher LOCS
-    MEGA_SERVICE_FILES_THRESHOLD = 2 # If NbFiles > Threshold, it's likely a mega service -- 150% -- Service has 1.5 times higher FILES
-
-
     # Global needed vars
     vars = dict()
 
@@ -139,22 +133,19 @@ class Detector(object):
 
 
 
-    # Rule : (LOC > (threshold * SysAvgLocs) and NbFiles > (threshold * SysAvgNbFiles))
+    # Rule : (LOC > (threshold * SysAvgLocs)
     def hasMegaService(self):
 
         for service in self._metamodel["system"]["microservices"]:
             requiredLocs =  requiredLocs = self.vars["totalLocs"] *0.39
-            requiredFiles = math.floor(self.MEGA_SERVICE_FILES_THRESHOLD * self.vars["avgFiles"])
 
             hasMoreLocsThanAvg = int(service["locs"]) > requiredLocs
-            hasMoreFilesThanAvg = int(service["nb_files"]) > requiredFiles
 
             if(hasMoreLocsThanAvg and  ("demo" not in service["name"] and "command" not in service["name"])):
                 self._hasMega[service["name"]] = {
                     "locs": service["locs"],
                     "nbFiles": service["nb_files"],
-                    "requiredLocs": requiredLocs,
-                    "requiredFiles": requiredFiles
+                    "requiredLocs": requiredLocs
                 }
 
     # Rule : (LOC < (threshold * SysAvgLocs) and NbFiles < (threshold * SysAvgNbFiles))

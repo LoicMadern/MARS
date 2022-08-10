@@ -6,9 +6,11 @@ import microservices
 import javaparser
 import dockerfiles
 import shutil
+import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--project", type=str, required=True)
+parser.add_argument("--url", type=str, required=False)
 
 args = parser.parse_args()
 
@@ -36,8 +38,11 @@ mm_file = open(metamodel_file, "r")
 mm = json.load(mm_file)
 mm_file.close()
 
-mm["gitRepository"] = args.project
-mm["system"]["folders"] = folders
+if args.url :
+    mm["isGitRepository"] = args.url
+else :
+    mm["isGitRepository"] = "NAN"
+
 
 ##################################
 # Extracting system dependencies #

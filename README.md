@@ -14,22 +14,20 @@
 
 
 #################################
-# RUNNING THE TOOL WITHOUT GUI  #
+# RUNNING THE TOOL #
 #################################
 
-#0 create a folder at the same level as MARS-fork
+Some scripts were developped in order to make handling easier the tool.
+The script will create a folder named projects in the same level as the tool itself
 
-#example : if we do ls command in a terminal we should have:
-- MARS-fork
-- prokect
+#1st step download your project
+- sudo sh download-repo.sh folder_name url_repo
 
-#1st step download your project in a folder that would be in projects folder
-- create an empty folder where the project will be download
-- cd ./GitImporter
-- python main.py URL_OF_GIT_REPO (ex. https://github.com/microservices-patterns/ftgo-application) FOLDER_NAME_WHERE_THE_PROJECT_WILL_BE_STORED (ex: ftgo)
+the folder_name will be the folder that will contains the application
+it will be store in the folder projects
 
 #2nd prepare your project to be analysed by MARS
-- cd ../projects/project_name
+- cd ../projects/folder_name
 - vim exclude.txt 
 - add folders you want to exclude (Each one in a new line)
 - close vim
@@ -37,7 +35,7 @@
 
 #3th step launch MARS
 - cd ..
-- sudo sh analyze.sh NAME_FOLDER_PROJECT (ex. ftgo-application) 
+- sudo sh analyze.sh folder_name url_repo
 
 #4th watch the result
 - cd projects/NAME_PROJECT
