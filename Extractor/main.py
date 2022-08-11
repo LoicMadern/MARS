@@ -6,7 +6,7 @@ import microservices
 import javaparser
 import dockerfiles
 import shutil
-import time
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--project", type=str, required=True)
@@ -15,6 +15,7 @@ parser.add_argument("--url", type=str, required=False)
 args = parser.parse_args()
 
 mbsroot = "../../projects/"+ args.project
+call_graph_path = "../../projects/"+ args.project + "/calls.csv"
 metamodel_file = mbsroot + "/metamodel.json"
 
 if os.path.exists(metamodel_file):
@@ -39,9 +40,9 @@ mm = json.load(mm_file)
 mm_file.close()
 
 if args.url :
-    mm["isGitRepository"] = args.url
+    mm["system"]["GitRepository"] = args.url
 else :
-    mm["isGitRepository"] = "NAN"
+    mm["system"]["GitRepository"] = "NAN"
 
 
 ##################################
@@ -109,6 +110,7 @@ for microservice in system_ms:
     ms_data["code"]["databases"]["datasources"] = []
     ms_data["code"]["databases"]["create"] = []
     ms_data["code"]["source_files"] = javaparser.getsourcefiles(service_path)
+    ms_data["code"]["callgraph"] = javaparser.calls(call_graph_path, microservice)
     ms_data["config"] = dict()
     ms_data["config"]["config_files"] = javaparser.getconfigfiles(service_path)
     ms_data["deployment"] = dict()

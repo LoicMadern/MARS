@@ -1,2 +1,6 @@
-FROM eventuateio/eventuate-examples-docker-images-java-example-base-image:BUILD-5
-COPY build/libs/ftgo-restaurant-service.jar service.jar
+FROM java:8-jre
+VOLUME /tmp
+ENV environment=docker
+ADD target/*.jar app.jar
+ENTRYPOINT java -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -Djava.security.egd=file:/dev/./urandom -Dserver.contextPath=/statement-service -Dspring.profiles.active=$environment -jar /app.jar
+EXPOSE 8080

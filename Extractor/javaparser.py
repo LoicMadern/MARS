@@ -1,8 +1,7 @@
 import glob
 import javalang
 import re
-
-import os.path
+import pandas as pd
 from os import walk
 
 def getsourcefiles(service_path):
@@ -10,6 +9,18 @@ def getsourcefiles(service_path):
     for (repertoire, sousRepertoires, fichiers) in walk(service_path):
         listeFichiers.extend(fichiers)
     return listeFichiers
+
+
+def calls(call_graph_path, microservice):
+
+    df = pd.read_csv(call_graph_path, delimiter=',', header=None)
+    tab = []
+    for value in df.values:
+        if value[0].split("/")[0]==microservice and not  [value[0].split("/")[0], value[1].split("/")[0]] in tab:
+            tab.append([value[0], value[1]])
+    return tab
+
+
 
 
 def getjavasourcefiles(service_path):

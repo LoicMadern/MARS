@@ -2,8 +2,7 @@ import json
 import argparse
 import math
 import pandas as pd
-from os import walk
-import networkx as nx
+
 
 
 class Detector(object):
@@ -116,13 +115,15 @@ class Detector(object):
 
     # Rule: Msa imports MSb AND MSb imports MSa
     def hasCircularDependencies(self):
-        root = "../../projects/" + args.project_name + "/"
-        df = pd.read_csv(root + "calls.csv", delimiter=',', header=None)
+        pre_tab =[]
         tab = []
         final_tab = []
-        for value in df.values:
-            if [value[0].split("/")[0], value[1].split("/")[0]] not in tab and value[0].split("/")[0] != \
-                    value[1].split("/")[0]:
+        for service in self._metamodel["system"]["microservices"]:
+            for call in service["code"]["callgraph"] :
+                if call!=[] :
+                    pre_tab.append(call)
+        for value in pre_tab:
+            if [value[0].split("/")[0], value[1].split("/")[0]] not in tab and value[0].split("/")[0] != value[1].split("/")[0]:
                 tab.append([value[0].split("/")[0], value[1].split("/")[0]])
         for element in tab:
             if [element[1], element[0]] in tab and not [element[1], element[0]] in final_tab or [element[0], element[
