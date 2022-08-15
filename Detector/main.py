@@ -465,7 +465,6 @@ class Detector(object):
 
             # Microservice level
             for service in self._metamodel["system"]["microservices"]:
-
                 for dependency in service["dependencies"]:
                     for tool in tools:
                         if (tool in dependency):
@@ -761,12 +760,9 @@ class Detector(object):
 
         print("No HealthCheck : ")
         print("-----------------")
-        if len(self._hasNoHealthCheck.items()) == 0:
-            print("The antipattern was detected\n")
-        else :
-            print("*** If you only see system on this list, you're most likely fine.\n***")
-            for k, v in self._hasNoHealthCheck.items():
-                print("- " + k + " has no healthcheck library")
+        print("If you only see system on this list or nothing below it's ok you are most likely fine\n")
+        for k, v in self._hasNoHealthCheck.items():
+            print("- " + k + " has no healthcheck library")
         print("\n")
 
         print("Local logging : ")

@@ -1,6 +1,2 @@
-FROM java:8-jre
-VOLUME /tmp
-ENV environment=docker
-ADD target/*.jar app.jar
-ENTRYPOINT java -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -Djava.security.egd=file:/dev/./urandom -Dserver.contextPath=/statement-service -Dspring.profiles.active=$environment -jar /app.jar
-EXPOSE 8080
+FROM prom/prometheus:v2.4.2
+ADD prometheus.yml /etc/prometheus/
