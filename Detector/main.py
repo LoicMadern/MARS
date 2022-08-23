@@ -9,10 +9,7 @@ class Detector(object):
 
     # Constants to act as defaults
 
-    # Nano Service
-    # Rule : (LOC < (threshold * SysAvgLocs) and NbFiles < (threshold * SysAvgNbFiles))
-    NANO_SERVICE_LOC_THRESHOLD = 0.5   # If LOCs < Threshold, it's likely a nano service  -- 50% -- Service has 0.5 times lower LOCS
-    NANO_SERVICE_FILES_THRESHOLD = 0.5 # If NbFiles < Threshold, it's likely a nano service -- 50% -- Service has 0.5 times lower LOCS
+
 
 
     # Global needed vars
@@ -55,7 +52,6 @@ class Detector(object):
 
         self.vars["avgLocs"] = self.vars.setdefault("avgLocs", 0) + (self.vars["totalLocs"] / self.vars["nbServices"])
         self.vars["avgFiles"] = self.vars.setdefault("avgFiles", 0) + (self.vars["totalFiles"] / self.vars["nbServices"])
-
         self.vars["hasCiCdFolders"] = self.vars.setdefault("hasCiCdFolders", False)
         
         with open("../tools/cicd_folders.txt") as cicd:
@@ -151,6 +147,11 @@ class Detector(object):
 
     # Rule : (LOC < (threshold * SysAvgLocs) and NbFiles < (threshold * SysAvgNbFiles))
     def hasNanoService(self):
+        # Nano Service
+        # Rule : (LOC < (threshold * SysAvgLocs) and NbFiles < (threshold * SysAvgNbFiles))
+        NANO_SERVICE_LOC_THRESHOLD = 0.5  # If LOCs < Threshold, it's likely a nano service  -- 50% -- Service has 0.5 times lower LOCS
+        NANO_SERVICE_FILES_THRESHOLD = 0.5  # If NbFiles < Threshold, it's likely a nano service -- 50% -- Service has 0.5 times lower LOCS
+
         #some services as APIs or config service should not be taking in account as a microservice
         #that why there is list of ban words in order to not counting this kind of occurrences
         with open("../tools/name_ban_for_nano_services.txt", "r") as confTools:
@@ -158,8 +159,8 @@ class Detector(object):
             tools = [line.rstrip() for line in tools]
             for service in self._metamodel["system"]["microservices"]:
                 red_flag_service_name = False
-                requiredLocs = math.floor(self.NANO_SERVICE_LOC_THRESHOLD * self.vars["avgLocs"])
-                requiredFiles = math.floor(self.NANO_SERVICE_FILES_THRESHOLD * self.vars["avgFiles"])
+                requiredLocs = math.floor(NANO_SERVICE_LOC_THRESHOLD * self.vars["avgLocs"])
+                requiredFiles = math.floor(NANO_SERVICE_FILES_THRESHOLD * self.vars["avgFiles"])
 
                 hasLessLocsThanAvg = int(service["locs"]) < requiredLocs
                 hasLessFilesThanAvg = int(service["nb_files"]) < requiredFiles
@@ -390,14 +391,18 @@ class Detector(object):
             "existence": False
         }
 
-
         for file in self._metamodel["system"]["config_files"]:
             if "docker-compose.yml" in file:
                 systemHasCompose = True
             for service in self._metamodel["system"]["microservices"]:
+                if service["name"] == "docker" or service["name"] == "Docker":
+                    self._hasMultipleInstancesPerHost["docker_directory"] = {
+                        "existence": True
+                    }
             # Microservice level
 
                 if len(service["deployment"]["docker_files"]) == 0 :
+
 
                     self._hasMultipleInstancesPerHost[service["name"]] = {
                         "hasDockerFile": False
@@ -516,6 +521,7 @@ class Detector(object):
                     self._hasLocalLogging["system"] = {
                         "hasLoggingTool": False
                     }
+
 
         # Rule : intersect(monitoring libs, dependencies) = 0
     def hasInsufficientMonitoring(self):
@@ -658,19 +664,20 @@ class Detector(object):
         print("Hardcoded Endpoints : ")
         print("----------------------")
 
-        print("Only count the ones which has not a discoveryTool \n")
+        print("Only count the ones which has not a discoveryTool : " + str(len(self._hasHardcodedEndpoints.items())) + "\n")
         for k, v in self._hasHardcodedEndpoints.items():
-            print("- " + k)
-            print("\t- Has service discovery tool : " + str(v["hasServiceDiscoveryTool"]))
-            print("\t- Found URLs in microservice :")
-            for url in v["FoundUrls"].split(","):
-                print("\t\t- " + url.strip())
+            if(k!="docker" or k!="Docker") :
+                print("- " + k)
+                print("\t- Has service discovery tool : " + str(v["hasServiceDiscoveryTool"]))
+                print("\t- Found URLs in microservice :")
+                for url in v["FoundUrls"].split(","):
+                    print("\t\t- " + url.strip())
         print("\n")
 
 
         print("Manual configuration : ")
         print("-----------------------")
-        print("Only count the ones which has not a configuration tool \n")
+        print("The antipattern is detected if all configuration listed have not a configuration tool \n")
         for k, v in self._hasManualConfig.items():
             print("- " + k)
             print("\t- Has configuration tool : " + str(v["hasConfigurationTool"]))
@@ -724,13 +731,13 @@ class Detector(object):
 
         print("Multiple instances per host : ")
         print("--------------------------")
-        if (len(self._hasMultipleInstancesPerHost.items()) >= self.vars["nbServices"] ) :
+        if (len(self._hasMultipleInstancesPerHost.items()) >= self.vars["nbServices"] and not self._hasMultipleInstancesPerHost["docker_directory"]) :
             print("The antipattern was detected \n")
 
         else :
             print("**The application has not the antipattern multiple instance per host. However, the following microservices do not have any dockerfile.***")
             for k, v in self._hasMultipleInstancesPerHost.items():
-                if not "docker_directory" in k :
+                if not "docker" != k or  "Docker" != k:
                     print("- " + k + " has no DockerFile")
         print("\n")
 
@@ -760,9 +767,10 @@ class Detector(object):
 
         print("No HealthCheck : ")
         print("-----------------")
-        print("If you only see system on this list or nothing below it's ok you are most likely fine\n")
+        print("If you only see system on this list or nothing below it's ok\n")
         for k, v in self._hasNoHealthCheck.items():
-            print("- " + k + " has no healthcheck library")
+            if k!="docker" or k!="Docker":
+                print("- " + k + " has no healthcheck library")
         print("\n")
 
         print("Local logging : ")

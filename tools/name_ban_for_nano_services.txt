@@ -22,3 +22,6 @@ docker
 Docker
 tests
 test
+admin
+user
+consign
