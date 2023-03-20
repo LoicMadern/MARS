@@ -1,0 +1,65 @@
+Extractor Time Complexity:
+
+
+JavaParser.py:
+* getsourcefiles: O(n), since we store the matching files in the source_files list, which can potentially hold up to n file paths. 
+* getconfigfiles: O(m * n), where m is the number of possible patterns stored in the config_files.txt file, and n is the total number of files and directories 
+* getrootconfigfiles: O(m * n) where m is the number of possible patterns stored in the config_files.txt file. n file paths.
+* getenvfiles(): function is O(m * n), where m is the number of possible patterns stored in the env_files.txt file, and n is the total number of files and directories within service_path
+* parse() function is O(n), where n is the number of characters in the source file.
+* getmethods() function is O(m), where m is the number of methods in the Java source code.
+* getannotations() function is O(a), where a is the number of annotations in the source code.
+* getimports() function is O(i), where i is the number of import statements in the source code.
+* gethttpdb: function is O(n), where n is the number of characters in the input source file. 
+* getdatasourceurls() function is O(n), where n is the number of characters in the input source file.
+* getcreatedbstatements() function is also O(n), where n is the number of characters in the input source file. 
+
+
+Microservices.py
+* extract() function is O(n), where n is the number of directories in the root directory. 
+* getlang: O(1)
+* getlocs: O(n), where n is the number of lines in the output of the "cloc" command executed on the given service.
+
+
+Other files
+* extract(): O(n), where n is the number of nodes in the JSON file. 
+* getdockerfiles: O(N*M), where N is the number of possible file types to search for and M is the number of files in the given service_path.
+* parse: O(N), where N is the number of instructions in the Dockerfile.
+* getdockerfiles: O(N*M), where N is the number of possible file types to search for and M is the number of files in the given service_path.
+* parse: O(N), where N is the number of instructions in the Dockerfile.
+
+⇒ ​​the overall time complexity of the script can be approximated as O(n * k), where n is the number of microservices and k is the number of files being analyzed per microservice.
+
+
+
+Detector complexity:
+
+
+1. hasWrongCuts() method is O(nk) if the number of files in each microservice directory is bounded by a constant k, n number of microservoces.
+2. hasCircularDependencies(): O(m), where m is the dependencies in the "calls.csv" file. 
+3. hasMegaService(): complexity of the code is O(n)
+4. hasNanoService(): is O(n)
+5. hasSharedDependencies(): O(nm), where n is the number of microservices and m is the maximum number of dependencies any single microservice has. 
+6. hasHardcodedEndpoints: O(nm), where n is the number of microservices and m is the maximum number of dependencies any single microservice has. 
+7. hasManualConfiguration(): O(nm), where n is the number of microservices, m is the average number of dependencies per microservice.
+8. hasCiCd(): O(nm), where n is the number of microservices and m is the maximum number of dependencies any single microservice has. 
+9. hasApiGateway(): O(nm), where n is the number of microservices and m is the maximum number of dependencies any single microservice has. 
+10. hasTimeouts(): O(nm), n is the number of microservices and m is the maximum number of dependencies any single microservice has. 
+11. hasSharedPersistence(): O(nm), n is the number of microservices and m is the maximum number of dependencies any single microservice has. 
+12. hasNoApiVersioning(): O(nm), n is the number of microservices and m is the maximum number of dependencies any single microservice has. 
+13. hasHealthCheck(): O(nm), n is the number of microservices and m is the maximum number of dependencies any single microservice has. 
+14. hasLocalLogging : O(nm), n is the number of microservices and m is the maximum number of dependencies any single microservice has. 
+15. hasInsufficientMonitoring(): O(nm), n is the number of microservices and m is the maximum number of dependencies any single microservice has. 
+
+
+The total time complexity of the codebase would be the sum of the time complexities of all the methods, which are as follows:
+
+
+O(nk) + O(m) + O(n) + O(n) + O(nm) + O(nm) + O(nm) + O(nm) + O(nm) + O(nm) + O(nm) + O(nm)
+
+
+Where n is the number of microservices, m is the maximum number of dependencies any single microservice has and k the maximum number of files in each microservice 
+Simplifying, we get: O(nk + nm + m + n)
+
+
+Therefore, the total time complexity of the codebase is O(n(k+m))
