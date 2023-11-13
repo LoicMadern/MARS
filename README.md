@@ -19,12 +19,12 @@
 
 Some scripts were developped in order to make handling easier the tool.
 When you'll execute for the first time a folder named projects will be created.
-It will be on computer at the same level as the tool itself.It will store the projects that you will analyze.
+It will be on your computer at the same level as the tool itself.It will store the projects that you will analyze.
 
 #1st step download your project
 - sudo sh download-repo.sh project_name url_repo
 
-project_name is the argument for creating a folder named project_name in projects folder.It will contain the repo that you to analyze
+project_name is the argument for creating a folder named project_name in projects folder.It will contain the repo that you want to analyze
 
 url_repo is the argument for the repository url on github that you want to analyze
 
@@ -32,10 +32,10 @@ url_repo is the argument for the repository url on github that you want to analy
 #2nd prepare your project to be analysed by MARS
 - cd ../projects/project_name
 - vim exclude.txt 
-- add folders you want to exclude (Each one in a new line)
+- write folders that you want to exclude from the analysis (Each one in a new line)
 - close vim
-- modify the calls.CSV file. You'll make a callgraphs by couple of microservices of the project by using comma separator.
-( you can use IDE as intellijea, if you can't, go on the next step and don't take in account the circular dependencies analysis)
+- modify the calls.CSV file. You'll make a callgraphs of all couples microservices from project_name by using comma separator.
+( you can use IDE as intellij, if you can't, go on the next step and don't take in account the circular dependencies analysis)
 
 #3th step launch MARS
 - cd ..
@@ -43,7 +43,7 @@ url_repo is the argument for the repository url on github that you want to analy
 
 #4th watch the result
 - cd projects/project_name
-- metamodel.json and output have been generated
+- metamodel.json and output file have been generated
 
 For further informations, please contact :
 
