@@ -34,7 +34,8 @@ url_repo is the argument for the repository url on github that you want to analy
 - vim exclude.txt 
 - add folders you want to exclude (Each one in a new line)
 - close vim
-- add a CSV callgraphs by package with , separator named calls
+- modify the calls.CSV file. You'll make a callgraphs by packages of the project by using comma separator.
+( you can use IDE as intellijea, if you can't, go on the next step and don't take in account the circular dependencies analysis)
 
 #3th step launch MARS
 - cd ..
