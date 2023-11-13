@@ -18,16 +18,19 @@
 #################################
 
 Some scripts were developped in order to make handling easier the tool.
-The script will create a folder named projects in the same level as the tool itself
+When you'll execute for the first time a folder named projects will be created.
+It will be on computer at the same level as the tool itself.It will store the projects that you will analyze.
 
 #1st step download your project
-- sudo sh download-repo.sh folder_name url_repo
+- sudo sh download-repo.sh project_name url_repo
 
-the folder_name will be the folder that will contains the application
-it will be store in the folder projects
+project_name is the argument for creating a folder named project_name in projects folder.It will contain the repo that you to analyze
+
+url_repo is the argument for the repository url on github that you want to analyze
+
 
 #2nd prepare your project to be analysed by MARS
-- cd ../projects/folder_name
+- cd ../projects/project_name
 - vim exclude.txt 
 - add folders you want to exclude (Each one in a new line)
 - close vim
@@ -35,8 +38,14 @@ it will be store in the folder projects
 
 #3th step launch MARS
 - cd ..
-- sudo sh analyze.sh folder_name url_repo
+- sudo sh analyze.sh project_name url_repo
 
 #4th watch the result
-- cd projects/NAME_PROJECT
+- cd projects/project_name
 - metamodel.json and output have been generated
+
+For further informations, please contact :
+
+Imene Trabelsi : imen.trabelsi.1@ens.etsmtl.ca
+Manel Abdellatif :
+manel.abdellatif@etsmtl.ca
